@@ -1,7 +1,7 @@
-Assignment Reqs:
+**Assignment Reqs**:
 Each group must come up with a list of 12 user stories for their proposed project. Additionally, you must document at least 12 possible exceptions/error scenarios you need to handle. 
 
-User Stories:
+**User Stories**:
 
 Cal Poly Student: As a college student, I want ways to find new outdoor routes that are popular with other students my age and find hidden gems around the area that my friends post about.
 
@@ -30,7 +30,7 @@ Surf Shop: With so many surf shops available to rent from along the Central Coas
 Old SLO BBQ Co: As owners of a local barbeque shop with successful competitors like Firestone Grill and Nobu, we want to attract more customers and gain publicity by offering deals on sandwiches based on how many peep coins are earned by users through PeakPeeps. 
 
 
-Exceptions:
+**Exceptions**:
 
 If a user wants to map something that’s not in the region of our app, the app will return an error explaining that their trail falls outside of the area supported by our platform. 
 

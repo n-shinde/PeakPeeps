@@ -3,7 +3,7 @@ Each group must come up with a list of 12 user stories for their proposed projec
 
 **User Stories**:
 
-Cal Poly Student: As a college student, I want ways to find new outdoor routes that are popular with other students my age and find hidden gems around the area that my friends post about.
+Cal Poly Student: As a college student, I want ways to find new outdoor routes that are popular among other students my age and find hidden gems around the area that my friends post about.
 
 Normal Goer: As a casual hiker, I want to find easily accessible routes near me so that I can enjoy a quick walk or run when I get some free time. 
 

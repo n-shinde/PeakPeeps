@@ -142,7 +142,7 @@ Returns a list of popular routes posted on the app.
 ]
 ```
 
-### 2.4. View Friends Routes - `/routes/friends` (POST)
+### 2.4. View Friends Routes - `/routes/friends` (GET)
 
 Returns a list of routes a user's friend has visited on the app.
 
@@ -176,3 +176,77 @@ Returns a list of routes a user's friend has visited on the app.
     }
 ]
 ```
+
+## 3. Reviews
+
+### 3.1. Write New Review - `/reviews/new` (POST)
+
+Creates a new review and posts it on the route page.
+
+**Request**:
+
+```json
+[
+  {
+    "author_name": "string"  
+    "rating": ["1 star", "2 star", "3 star", "4 star", "5 star"]   /* List of rating options
+    "description: "string"
+  }
+]
+```
+
+**Returns**:
+
+```json
+[
+    {
+      "success": boolean
+    }
+]
+```
+
+## 4. Customer Purchasing
+
+### 4.1. Add PeepCoins - `/peepcoins/add` (PUT)
+
+Adds PeepCoins to user's account balance.
+
+**Request**:
+
+```json
+{
+  "coins_to_add": "integer"
+}
+```
+
+**Returns**:
+
+```json
+{
+    "success": "boolean"
+}
+```
+
+### 4.2. Buy Coupon with PeepCoins - `/peepcoins/purchase/coupon` (POST)
+
+Executes coupon transaction using available PeepCoins.
+
+**Request**:
+
+```json
+{
+  "coupon_name": "string",
+  "coupon_price": "int",
+  "valid": "boolean",
+}
+```
+
+**Returns**:
+
+```json
+{
+    "success": "boolean",
+    "transaction_details": "string"
+}
+```
+

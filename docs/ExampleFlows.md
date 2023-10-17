@@ -12,4 +12,8 @@ A couple months later, Steveâ€™s activity on the app has skyrocketed. Since heâ€
 **2. SLO Visitor Example Flow**
 
 
-3. 
+3. GateKeeper
+
+Zac, a born-and-raised slocal (San Luis Obispo Local), recently discovered that his favorite retreat, Ebb Tide Beach, had become overcrowded with the general public. Frustrated by the loss of his peaceful haven, Zac embarked on a quest to find a solution. His search led him to "Peek Peeps," an app designed to help users maintain the secrecy of their favorite spots while sharing them exclusively with close friends.
+
+Now, Zac enjoys the company of his inner circle, including Robin, Julia, Nidia, and Josh, as they explore the scenic trails he has revealed to them. With each shared route, Zac earns PeepCoins, a virtual currency that can be redeemed at local businesses. As he continues uncovering hidden gems in the Central Coast, Zac not only preserves the sanctity of his cherished spots but also supports the community through his PeepCoin ventures

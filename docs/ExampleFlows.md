@@ -11,8 +11,13 @@ A couple months later, Steve’s activity on the app has skyrocketed. Since he�
 
 **2. SLO Visitor Example Flow**
 
+Victor, a busy software engineer at Apple, during one long weekend decides to come to SLO because he has heard of many cool sites to see from his co-workers. After a 3 hour drive, he finally arrives in SLO, but doesn’t know which sites to see and try first. He then remembered an app called Peak Peeps, which helps find sites/routes to try that one of his-coworkers mentioned. So, he downloaded Peak Peeps from the App Store. First, Victor requests to view popular routes to see which are the best routes to try by calling GET /routes/popular. Victor sees that there are 3 routes with a high “popularity_index” and 9 “five_star_reviews”.
 
-**3. GateKeeper
+A couple minutes later, he decided to go with one of the 3 routes that was close to his hotel as described by the “location” attribute.
+
+After he completed the route, he was amazed by the scenery and wanted to leave a review. So, he called POST /reviews/new and entered his username/name and the “rating” for that route.
+
+**3. GateKeeper**
 
 Zac, a born-and-raised local in San Luis Obispo (SLO), recently discovered that his favorite retreat, Ebb Tide Beach, had become overcrowded with the general public. Frustrated by the loss of his peaceful haven, Zac embarked on a quest to find a solution. His search led him to "Peak Peeps," an app designed to help users maintain the secrecy of their favorite spots while sharing them exclusively with close friends.
 

@@ -12,7 +12,7 @@ A couple months later, Steveâ€™s activity on the app has skyrocketed. Since heâ€
 **2. SLO Visitor Example Flow**
 
 
-3. GateKeeper
+**3. GateKeeper
 
 Zac, a born-and-raised local in San Luis Obispo (SLO), recently discovered that his favorite retreat, Ebb Tide Beach, had become overcrowded with the general public. Frustrated by the loss of his peaceful haven, Zac embarked on a quest to find a solution. His search led him to "Peak Peeps," an app designed to help users maintain the secrecy of their favorite spots while sharing them exclusively with close friends.
 

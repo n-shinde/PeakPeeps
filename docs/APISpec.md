@@ -189,7 +189,7 @@ Creates a new review and posts it on the route page.
 [
   {
     "author_name": "string"  
-    "rating": ["1 star", "2 star", "3 star", "4 star", "5 star"]   /* List of rating options
+    "rating": "integer"   /* On a scale of 1 - 5 (ints only)
     "description: "string"
   }
 ]

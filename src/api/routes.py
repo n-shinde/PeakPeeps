@@ -32,7 +32,8 @@ def post_add_route(route_to_add: Routes):
                 """
             ), [{"name":route_to_add.name, 
                  "user_added":route_to_add.user_id,
-                 "location":route_to_add.length,
+                 "location":route_to_add.location,
+                 "length_in_miles":route_to_add.length,
                  "difficulty":route_to_add.difficulty,
                  "activities":route_to_add.activities,
                  "coords":route_to_add.coordinates}]

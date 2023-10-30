@@ -25,13 +25,13 @@ def post_add_route(route_to_add: Routes):
         connection.execute(
             sqlalchemy.text(
                 """
-                INSERT INTO route (name, user_added, location, 
+                INSERT INTO route (name, user_id, location, 
                 length_in_miles, difficulty, activities, coords)
-                VALUES (:name, :user_added, :location, :length_in_miles,
+                VALUES (:name, :user_id, :location, :length_in_miles,
                 :difficulty, :activities, :coords)
                 """
             ), [{"name":route_to_add.name, 
-                 "user_added":route_to_add.user_id,
+                 "user_id":route_to_add.user_id,
                  "location":route_to_add.location,
                  "length_in_miles":route_to_add.length,
                  "difficulty":route_to_add.difficulty,

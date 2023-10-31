@@ -27,3 +27,7 @@ create table
     constraint User_pkey primary key (id),
     constraint User_username_key unique (username)
   ) tablespace pg_default;
+
+
+INSERT INTO user (username)
+VALUES ("Biker_Dave")

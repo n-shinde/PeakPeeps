@@ -3,22 +3,23 @@ Steve is a busy software engineer at Apple, during one long weekend he decides t
 # Testing results
 Curl Statement:
 
-curl -X 'POST' \                
+curl -X 'POST' \
   'https://peak-peeps.onrender.com/routes/add' \
   -H 'accept: application/json' \
   -H 'access_token: PeepCoins123!' \
   -H 'Content-Type: application/json' \
   -d '{
-  "name": "Steve",
-  "user_id": 2,
-  "location": "P-Hike",
+  "name": "Victor",
+  "user_id": 3,
+  "location": "The P",
   "coordinates": [
-    100, 100
+    100,100
   ],
   "length": 0.9,
   "difficulty": 5,
-  "activities": "Taking Pictures"
+  "activities": "Took pictures"
 }'
 
 Response:
 "OK"%
+

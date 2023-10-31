@@ -53,9 +53,13 @@ def get_popular_routes():
                 WHERE review.rating >= 4
                 """
             )
-        ).all()
+        ).scalars()
+
+    route_list = []
+    for item in popular_routes:
+        route_list.append(item)
     
-    return popular_routes
+    return route_list
 
         
     

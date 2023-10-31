@@ -48,8 +48,8 @@ def get_popular_routes():
         popular_routes = connection.execute(
             sqlalchemy.text(
                 """
-                SELECT location FROM routes
-                JOIN review ON routes.id = review.route_id
+                SELECT location FROM route
+                JOIN review ON route.id = review.route_id
                 WHERE review.rating >= 4
                 """
             )

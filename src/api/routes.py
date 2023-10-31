@@ -19,6 +19,7 @@ class Routes(BaseModel):
     difficulty: int
     activities: str
 
+
 @router.post("/add")
 def post_add_route(route_to_add: Routes):
     with db.engine.begin() as connection:
@@ -40,3 +41,8 @@ def post_add_route(route_to_add: Routes):
         )
     
     return "OK"
+
+@router.get("/{route_name}")
+def get_route(route_name: str):
+    """ """
+    return {"route_name": route_name}

@@ -42,7 +42,21 @@ def post_add_route(route_to_add: Routes):
     
     return "OK"
 
-@router.get("/{route_name}")
-def get_route(route_name: str):
-    """ """
-    return {"route_name": route_name}
+@router.get("/popular")
+def get_popular_routes():
+    with db.engine.begin() as connection:
+        popular_routes = connection.execute(
+            sqlalchemy.text(
+                """
+                SELECT location FROM routes
+                JOIN review ON routes.id = review.route_id
+                WHERE review.rating >= 4
+                """
+            )
+        ).all()
+    
+    return popular_routes
+
+        
+    
+

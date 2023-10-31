@@ -12,7 +12,7 @@ router = APIRouter(
 
 class Reviews(BaseModel):
     author_name: str
-    location: str
+    route_id: int
     description: str
     rating: int # On a scale of 1 - 5 (only ints)
 
@@ -22,16 +22,13 @@ def post_add_review(review_to_add: Reviews):
         connection.execute(
             sqlalchemy.text(
                 """
-                INSERT INTO review (author_name, location, description, rating)
-                VALUES (:author_name, :location, :description, :rating)
+                INSERT INTO review (route_id, author_name, description, rating)
+                VALUES (:route_id, :author_name, :description, :rating)
                 """
-            ), [{"author_name":review_to_add.author_name, 
-                 "location":review_to_add.location,
+            ), [{"route_id":review_to_add.route_id,
+                "author_name":review_to_add.author_name, 
                  "description":review_to_add.description,
                  "rating":review_to_add.rating}]
         )
     
     return "OK"
-
-# @router.post("/get")
-# def get_reviews(review_catalog: list[Reviews]):

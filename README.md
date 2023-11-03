@@ -8,3 +8,4 @@ Julia Francescutti jmfrance@calpoly.edu
 Nidhi Shinde nashinde@calpoly.edu
 Robin Tun rotun@calpoly.edu
 Josh Queja jqueja@calpoly.edu
+Alex Buchko abuchko@calpoly.edu

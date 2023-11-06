@@ -63,7 +63,8 @@ def get_popular_routes():
     return route_list
 
 
-@router.get(“/friends”)
+
+@router.get("/friends")
 def get_friends_routes(friend_username: Str):
     with db.engine.begin() as connection:
         friend_id = connection.execute(

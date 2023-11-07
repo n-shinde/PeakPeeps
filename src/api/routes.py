@@ -75,7 +75,7 @@ def get_friends_routes(friend_username: Str):
                 JOIN user ON user.Id = friendship.friend_id
                 WHERE user.username = :username
                 """
-            ),[{:username=friend_username}]).scalars()
+            ),[{":username"=friend_username}]).scalars()
         friends = connection.execute(
             sqlalchemy.text(
                 """
@@ -83,7 +83,7 @@ def get_friends_routes(friend_username: Str):
                 FROM route
                 JOIN route ON route.user_id = :friend_id
                 """
-            ),[{:friend_id=friend_id}]).scalars()
+            ),[{":friend_id"=friend_id}]).scalars()
 	
 	route_list = []
 

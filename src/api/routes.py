@@ -66,31 +66,30 @@ def get_popular_routes():
 
 @router.get("/friends")
 def get_friends_routes(friend_username: Str):
-    with db.engine.begin() as connection:
-        friend_id = connection.execute(
-            sqlalchemy.text(
-                """
-                SELECT friend_id
-                FROM friendship
-                JOIN user ON user.Id = friendship.friend_id
-                WHERE user.username = :username
-                """
-            ),[{"username":friend_username}]).scalars()
-        friends = connection.execute(
-            sqlalchemy.text(
-                """
-                SELECT name, date_added, location, length_in_miles,difficulty, activities, coords
-                FROM route
-                JOIN route ON route.user_id = :friend_id
-                """
-            ),[{"friend_id":friend_id}]).scalars()
+	with db.engine.begin() as connection:
+        	friend_id = connection.execute(
+            	sqlalchemy.text(
+	                """
+	                SELECT friend_id
+	                FROM friendship
+	                JOIN user ON user.Id = friendship.friend_id
+	                WHERE user.username = :username
+	                """
+	            ),[{"username":friend_username}]).scalars()
+	        friends = connection.execute(
+	            sqlalchemy.text(
+	                """
+	                SELECT name, date_added, location, length_in_miles,difficulty, activities, coords
+	                FROM route
+	                JOIN route ON route.user_id = :friend_id
+	                """
+	            ),[{"friend_id":friend_id}]).scalars()
 	
 	route_list = []
-
 	for item in friends:
 		route_list.append(item)
     
-    return route_list
+    	return route_list
         
     
 

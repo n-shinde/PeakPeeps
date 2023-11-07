@@ -3,7 +3,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from src.api import auth
 from src import database as db
-from src.api.peepcoins import PeepCoinRequest, add_peepcoins
+from src.api.peepcoins import add_peepcoins_query
 
 router = APIRouter(
     prefix="/routes",
@@ -47,12 +47,12 @@ def post_add_route(route_to_add: Routes):
             ],
         )
 
-    PEEP_COINS_FROM_ADDING_ROUTE = 10
-    request = PeepCoinRequest(
-        user_id=route_to_add.user_id, change=PEEP_COINS_FROM_ADDING_ROUTE
-    )
-    add_peepcoins(request, connection)
-    return "OK"
+        PEEP_COINS_FROM_ADDING_ROUTE = 10
+        connection.execute(
+            add_peepcoins_query,
+            {"user_id": route_to_add.user_id, "change": PEEP_COINS_FROM_ADDING_ROUTE},
+        )
+        return "OK"
 
 
 @router.get("/popular")

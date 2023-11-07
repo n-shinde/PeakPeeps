@@ -16,22 +16,20 @@ class PeepCoinRequest(BaseModel):
     change: int
 
 
+add_peepcoins_query = text(
+    """
+    INSERT INTO user_peepcoin_ledger (user_id, change)
+    VALUES (:user_id, :change)
+    """
+)
+
+
 @router.put("/add")
-def add_peepcoins(request: PeepCoinRequest, connection):
-    connection.execute(
-        text(
-            """
-                INSERT INTO user_peepcoin_ledger (user_id, change)
-                VALUES (:user_id, :change)
-                """
-        ),
-        [{"user_id": request.user_id, "change": request.change}],
-    )
-
-
 def put_add_peepcoins(request: PeepCoinRequest):
     with db.engine.begin() as connection:
-        add_peepcoins(request, connection)
+        connection.execute(
+            add_peepcoins_query, {"user_id": request.user_id, "change": request.change}
+        )
     return "OK"
 
 
@@ -42,7 +40,8 @@ class CouponRequest(BaseModel):
 
 @router.post("/purchase/coupon")
 def post_buy_coupon(request: CouponRequest):
-    coupon_id, user_id = request
+    coupon_id = request.coupon_id
+    user_id = request.user_id
     with db.engine.begin() as connection:
         # checking if the coupon is valid
         query = text("SELECT valid FROM coupons WHERE id = :coupon_id")
@@ -56,7 +55,7 @@ def post_buy_coupon(request: CouponRequest):
         # checking if user can affording the transaction
         query = text(
             """
-            select (select SUM(change) from user_peepcoin_ledger where user_id = :user_id) >= price
+            SELECT (SELECT SUM(change) FROM user_peepcoin_ledger WHERE user_id = :user_id) >= price
                 FROM coupons WHERE id = :coupon_id
             """
         )
@@ -74,6 +73,7 @@ def post_buy_coupon(request: CouponRequest):
 
         # adding coupon to their account
         query = text(
-            "INSERT INTO user_coupon_leger (user_id, coupon_id, change) VALUES (:user_id, :coupon_id, 1)"
+            "INSERT INTO user_coupon_ledger (user_id, coupon_id, change) VALUES (:user_id, :coupon_id, 1)"
         )
         connection.execute(query, {"user_id": user_id, "coupon_id": coupon_id})
+        return "OK"

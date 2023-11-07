@@ -65,7 +65,7 @@ def get_popular_routes():
 
 
 @router.get("/friends")
-def get_friends_routes(friend_username: Str):
+def get_friends_routes(friend_username: str):
 	with db.engine.begin() as connection:
 		friend_id = connection.execute(
 			sqlalchemy.text(
@@ -90,6 +90,28 @@ def get_friends_routes(friend_username: Str):
 		route_list.append(item)
 	
 	return route_list
+
+
+@router.get("/report")
+def report_route(route_to_report: Route):
+    with db.engine.begin() as connection:
+        connection.execute(
+            sqlalchemy.text(
+                """
+                UPDATE route
+                SET reported = "True"
+                WHERE route.name = :name
+                """
+            ),[{"name":route_to_report.name}])
+    
+    status = "Reported"
+    success = True
+    return [
+    {
+      "report_status": status,
+      "flagged": success
+    }
+    ]
 		
 	
 

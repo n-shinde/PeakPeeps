@@ -84,7 +84,7 @@ def get_friends_routes(friend_username: str):
                 """
 				SELECT friend_id
 				FROM friendship
-				JOIN user ON user.Id = friendship.friend_id
+				JOIN user ON user.id = friendship.friend_id
 				WHERE user.username = :username
 				"""
             ),
@@ -95,7 +95,7 @@ def get_friends_routes(friend_username: str):
                 """
 				SELECT name, date_added, location, length_in_miles,difficulty, activities, coords
 				FROM route
-				JOIN route ON route.user_id = :friend_id
+				WHERE user_id = :friend_id
 				"""
             ),
             [{"friend_id": friend_id}],
@@ -108,7 +108,7 @@ def get_friends_routes(friend_username: str):
     return route_list
 
 
-@router.get("/report")
+@router.post("/report")
 def report_route(route_to_report: Routes):
     with db.engine.begin() as connection:
         connection.execute(

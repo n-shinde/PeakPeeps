@@ -4,6 +4,8 @@ from pydantic import ValidationError
 from src.api import routes
 from src.api import reviews
 from src.api import peepcoins
+from src.api import businesses
+from src.api import coupons
 import json
 import logging
 import sys
@@ -39,6 +41,8 @@ app = FastAPI(
 app.include_router(routes.router)
 app.include_router(reviews.router)
 app.include_router(peepcoins.router)
+app.include_router(businesses.router)
+app.include_router(coupons.router)
 
 
 @app.exception_handler(exceptions.RequestValidationError)

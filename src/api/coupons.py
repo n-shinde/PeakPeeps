@@ -10,3 +10,23 @@ router = APIRouter(
     tags=["coupons"],
     dependencies=[Depends(auth.get_api_key)],
 )
+
+class Coupons(BaseModel):
+    business_id: int
+    name: str
+    cost: int
+
+
+@router.put("/add")
+def add_coupon(request: Coupons):
+    with db.engine.begin() as connection:
+        connection.execute(
+            sqlalchemy.text(
+                """
+                INSERT INTO coupons (business_id, name, cost)
+                VALUES (:bus_id, :name, :cost)
+                """
+            ),
+            [{"bus_id": request.business_id, "name": request.name, "cost": request.cost}],
+        )
+    return "OK"

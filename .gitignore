@@ -1,3 +1,4 @@
 .env
 venv
 src/api/__pycache__/
+/supabase

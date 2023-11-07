@@ -11,6 +11,7 @@ router = APIRouter(
     dependencies=[Depends(auth.get_api_key)],
 )
 
+
 class Business(BaseModel):
     name: str
     address: str

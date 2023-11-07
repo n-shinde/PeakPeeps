@@ -1,4 +1,4 @@
-import sqlalchemy
+from sqlalchemy import text
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from src.api import auth
@@ -11,6 +11,7 @@ router = APIRouter(
     dependencies=[Depends(auth.get_api_key)],
 )
 
+
 class Coupons(BaseModel):
     business_id: int
     name: str
@@ -21,12 +22,18 @@ class Coupons(BaseModel):
 def add_coupon(request: Coupons):
     with db.engine.begin() as connection:
         connection.execute(
-            sqlalchemy.text(
+            text(
                 """
                 INSERT INTO coupons (business_id, name, cost)
                 VALUES (:bus_id, :name, :cost)
                 """
             ),
-            [{"bus_id": request.business_id, "name": request.name, "cost": request.cost}],
+            [
+                {
+                    "bus_id": request.business_id,
+                    "name": request.name,
+                    "cost": request.cost,
+                }
+            ],
         )
     return "OK"

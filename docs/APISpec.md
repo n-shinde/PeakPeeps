@@ -4,13 +4,13 @@
 
 ### 1.1. Add Friend - `/socials/{friend}/add` (POST)
 
-Makes a request to add another user as a friend. 
+Makes a request to add another user as a friend.
 
 **Request**:
 
 ```json
 {
-  "username": "string",
+  "username": "string"
 }
 ```
 
@@ -18,14 +18,14 @@ Makes a request to add another user as a friend.
 
 ```json
 {
-    "success": "boolean"
+  "success": "boolean"
 }
 ```
 
 ### 1.2. Accept Friend Request - `/socials/{friend}/` (PUT)
 
 Accepts or deletes a given friend request based on user's decision.
-If accepted, both users can view each other's profiles. 
+If accepted, both users can view each other's profiles.
 
 **Request**:
 
@@ -40,7 +40,7 @@ If accepted, both users can view each other's profiles.
 
 ```json
 {
-    "success": "boolean"  
+  "success": "boolean"
 }
 ```
 
@@ -50,7 +50,7 @@ Returns a message to the user notifying them if a friend request was accepted or
 
 ```json
 {
-    "request_status": "string"
+  "request_status": "string"
 }
 ```
 
@@ -81,9 +81,9 @@ Adds a route to the list of routes available to view on the app.
 
 ```json
 [
-    {
-      "success": "boolean"
-    }
+  {
+    "success": "boolean"
+  }
 ]
 ```
 
@@ -110,10 +110,10 @@ Reports a route by flagging it as inappropriate, returns a status confirming the
 
 ```json
 [
-    {
-      "report_status": "string",
-      "flagged": "boolean"
-    }
+  {
+    "report_status": "string",
+    "flagged": "boolean"
+  }
 ]
 ```
 
@@ -151,7 +151,7 @@ Returns a list of routes a user's friend has visited on the app.
 ```json
 [
   {
-    "friend_username": "string"   /* The username of the friend being searched up 
+    "friend_username": "string"   /* The username of the friend being searched up
   }
 ]
 ```
@@ -188,7 +188,7 @@ Creates a new review and posts it on the route page.
 ```json
 [
   {
-    "author_name": "string"  
+    "author_name": "string"
     "rating": "integer"   /* On a scale of 1 - 5 (ints only)
     "description: "string"
   }
@@ -223,7 +223,7 @@ Adds PeepCoins to user's account balance.
 
 ```json
 {
-    "success": "boolean"
+  "success": "boolean"
 }
 ```
 
@@ -235,9 +235,8 @@ Executes coupon transaction using available PeepCoins.
 
 ```json
 {
-  "coupon_name": "string",
-  "coupon_price": "int",
-  "valid": "boolean",
+  "coupon_id": "int",
+  "user_id": "int"
 }
 ```
 
@@ -245,8 +244,7 @@ Executes coupon transaction using available PeepCoins.
 
 ```json
 {
-    "success": "boolean",
-    "transaction_details": "string"
+  "success": "boolean",
+  "transaction_details": "string"
 }
 ```
-

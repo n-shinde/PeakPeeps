@@ -97,7 +97,7 @@ def get_friends_routes(friend_username: str):
 
 
 @router.get("/report")
-def report_route(route_to_report: Route):
+def report_route(route_to_report: Routes):
     with db.engine.begin() as connection:
         connection.execute(
             sqlalchemy.text(

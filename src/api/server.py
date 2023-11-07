@@ -3,6 +3,7 @@ from fastapi.responses import JSONResponse
 from pydantic import ValidationError
 from src.api import routes
 from src.api import reviews
+from src.api import peepcoins
 import json
 import logging
 import sys
@@ -37,6 +38,8 @@ app = FastAPI(
 
 app.include_router(routes.router)
 app.include_router(reviews.router)
+app.include_router(peepcoins.router)
+
 
 @app.exception_handler(exceptions.RequestValidationError)
 @app.exception_handler(ValidationError)
@@ -45,9 +48,10 @@ async def validation_exception_handler(request, exc):
     exc_json = json.loads(exc.json())
     response = {"message": [], "data": None}
     for error in exc_json:
-        response['message'].append(f"{error['loc']}: {error['msg']}")
+        response["message"].append(f"{error['loc']}: {error['msg']}")
 
     return JSONResponse(response, status_code=422)
+
 
 @app.get("/")
 async def root():

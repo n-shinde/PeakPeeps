@@ -115,11 +115,11 @@ def report_route(route_to_report: Routes):
             sqlalchemy.text(
                 """
                 UPDATE route
-                SET reported = "True"
-                WHERE route.name = :name
+                SET reported = True
+                WHERE route.location = :location
                 """
             ),
-            [{"name": route_to_report.name}],
+            [{"location": route_to_report.location}],
         )
 
     status = "Reported"

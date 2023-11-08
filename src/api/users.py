@@ -13,8 +13,8 @@ router = APIRouter(
 
 
 class Users(BaseModel):
-    username: str
     id: int 
+    username: str
     #date_joined: str
     #num_followers: int
     #banned: bool

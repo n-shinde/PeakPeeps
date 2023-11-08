@@ -148,7 +148,7 @@ def user_follows_other_user(user_requesting_follow: Users, other_user: Users):
                     INSERT INTO followers (id, follower_id)
                     VALUES (:other_id, :follower_id)
                     """
-                ), [{"id": other_user_id, "follower_id": user_requesting_follow_id}]
+                ), [{"other_id": other_user_id, "follower_id": user_requesting_follow_id}]
             )
 
             # Increment other user's followers by 1

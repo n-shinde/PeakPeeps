@@ -13,23 +13,16 @@ router = APIRouter(
 
 
 class Users(BaseModel):
-    id: str
+    # id: str
     username: str
-    date_joined: str
-    num_followers: int
-    banned: bool
+    # num_followers: int
+    # banned: bool
 
 @router.post("/create_account")
 def post_create_account(user_created: Users):
-
     with db.engine.begin() as connection:
         connection.execute(
-            sqlalchemy.text(
-                """
-				INSERT INTO user (username)
-				VALUES (:name)
-				"""
-            ), [{'name': user_created.username}]
+            sqlalchemy.text("INSERT INTO user_test (username) VALUES (:name)"), [{'name': user_created.username}]
         )
 
     return "OK"

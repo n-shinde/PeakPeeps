@@ -84,7 +84,7 @@ def update_followers(user_to_update: Users, follower_to_add: Users):
                 sqlalchemy.text(
                     """
                     UPDATE user_test 
-                    SET num_followers += 1
+                    SET num_followers = num_followers + 1
                     WHERE id = (
                         SELECT id
                         FROM user_test

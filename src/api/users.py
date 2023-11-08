@@ -35,14 +35,40 @@ def update_followers(user_to_update: Users, follower_to_add: Users):
             sqlalchemy.text(
                 """
 				SELECT banned 
-                FROM user
-                WHERE id = :follow_id
+                FROM user_test
+                WHERE id = (
+                    SELECT id
+                    FROM user_test
+                    WHERE username = :follower_name
+                )
 				"""
-            ), [{"follow_id": follower_to_add.id}]
+            ), [{"follower_name": follower_to_add.username}]
         ).scalar()
 
     if (isBanned == False):
         with db.engine.begin() as connection:
+            # Get the user to update id
+            user_update_id = connection.execute(
+                sqlalchemy.text(
+                    """
+                    SELECT id
+                    FROM user_test
+                    WHERE username = :name
+                    """
+                ), [{"name": user_to_update.username}]
+            ).scalar()
+
+            # Get the follower to add id
+            follower_to_add_id = connection.execute(
+                sqlalchemy.text(
+                    """
+                    SELECT id
+                    FROM user_test
+                    WHERE username = :name
+                    """
+                ), [{"name": follower_to_add.username}]
+            ).scalar()
+
             # First add new follower to followers table
             connection.execute(
                 sqlalchemy.text(
@@ -50,18 +76,22 @@ def update_followers(user_to_update: Users, follower_to_add: Users):
                     INSERT INTO followers (id, follower_id)
                     VALUES (:id, :follower_id)
                     """
-                ), [{"id": user_to_update.id, "follower_id": follower_to_add.id}]
+                ), [{"id": user_update_id, "follower_id": follower_to_add_id}]
             )
 
             # Increment user's num followers by 1
             connection.execute(
                 sqlalchemy.text(
                     """
-                    UPDATE user 
+                    UPDATE user_test 
                     SET num_followers += 1
-                    WHERE id = :id
+                    WHERE id = (
+                        SELECT id
+                        FROM user_test
+                        WHERE username = :name
+                    )
                     """
-                ), [{"id": user_to_update.id}]
+                ), [{"name": user_to_update.username}]
             )
 
     else:

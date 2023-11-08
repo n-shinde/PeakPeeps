@@ -107,14 +107,40 @@ def user_follows_other_user(user_requesting_follow: Users, other_user: Users):
             sqlalchemy.text(
                 """
 				SELECT banned 
-                FROM user
-                WHERE id = :other_id
+                FROM user_test
+                WHERE id = (
+                    SELECT id
+                    FROM user_test
+                    WHERE username = :name
+                )
 				"""
-            ), [{"other_id": other_user.id}]
+            ), [{"name": other_user.username}]
         ).scalar()
     
     if (isBanned == False):
        with db.engine.begin() as connection:
+            # Get the user requesting follow id
+            user_requesting_follow_id = connection.execute(
+                sqlalchemy.text(
+                    """
+                    SELECT id
+                    FROM user_test
+                    WHERE username = :name
+                    """
+                ), [{"name": user_requesting_follow.username}]
+            ).scalar()
+
+            # Get the other user id
+            other_user_id = connection.execute(
+                sqlalchemy.text(
+                    """
+                    SELECT id
+                    FROM user_test
+                    WHERE username = :name
+                    """
+                ), [{"name": other_user.username}]
+            ).scalar()
+
             # First add new follower to the other user's table
             connection.execute(
                 sqlalchemy.text(
@@ -122,18 +148,22 @@ def user_follows_other_user(user_requesting_follow: Users, other_user: Users):
                     INSERT INTO followers (id, follower_id)
                     VALUES (:other_id, :follower_id)
                     """
-                ), [{"id": other_user.id, "follower_id": user_requesting_follow.id}]
+                ), [{"id": other_user_id, "follower_id": user_requesting_follow_id}]
             )
 
             # Increment other user's followers by 1
             connection.execute(
                 sqlalchemy.text(
                     """
-                    UPDATE user
-                    SET num_followers += 1
-                    WHERE id = :other_id
+                    UPDATE user_test
+                    SET num_followers = num_followers + 1
+                    WHERE id = (
+                        SELECT id
+                        FROM user_test
+                        WHERE username = :name
+                    )
                     """
-                ), [{"other_id": other_user.id}]
+                ), [{"name": other_user.username}]
             )
     else:
        return "User you are trying to follow is banned."
@@ -141,7 +171,7 @@ def user_follows_other_user(user_requesting_follow: Users, other_user: Users):
     return "OK"
 
 @router.post("/remove_follower")
-def remove_follower(user_id: int, follower_to_remove: str):
+def remove_follower(user_to_update: Users, follower_to_remove: Users):
 
     with db.engine.begin() as connection:
         # Retrieve id of person to remove
@@ -149,10 +179,10 @@ def remove_follower(user_id: int, follower_to_remove: str):
             sqlalchemy.text(
                 """
 				SELECT id 
-                FROM user
+                FROM user_test
                 WHERE username = :follower_name
 				"""
-            ), [{"follower_name": follower_to_remove}]
+            ), [{"follower_name": follower_to_remove.username}]
         ).scalar()
     
         # Find them in followers table and remove
@@ -160,20 +190,24 @@ def remove_follower(user_id: int, follower_to_remove: str):
             sqlalchemy.text(
                 """
                 DELETE FROM followers
-                WHERE (user_id = :user_id) and (follower_id = :remove_id)
+                WHERE (user_id = (SELECT id FROM user_test WHERE username = :name)) and (follower_id = :remove_id)
                 """
-            ), [{"user_id": user_id, "remove_id": follower_to_remove_id}]
+            ), [{"name": user_to_update.username, "remove_id": follower_to_remove_id}]
         )
 
         # Decrement user follower list by 1
         connection.execute(
             sqlalchemy.text(
                 """
-                UPDATE user
-                SET num_followers -= 1
-                WHERE id = :user_id
+                UPDATE user_test
+                SET num_followers = num_followers - 1
+                WHERE id = (
+                    SELECT id
+                    FROM user_test
+                    WHERE username = :name
+                )
                 """
-            ), [{"other_id": user_id}]
+            ), [{"name": user_to_update.username}]
         )
     return "OK"
 

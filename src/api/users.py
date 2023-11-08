@@ -190,7 +190,7 @@ def remove_follower(user_to_update: Users, follower_to_remove: Users):
             sqlalchemy.text(
                 """
                 DELETE FROM followers
-                WHERE (user_id = (SELECT id FROM user_test WHERE username = :name)) and (follower_id = :remove_id)
+                WHERE (id = (SELECT id FROM user_test WHERE username = :name)) and (follower_id = :remove_id)
                 """
             ), [{"name": user_to_update.username, "remove_id": follower_to_remove_id}]
         )

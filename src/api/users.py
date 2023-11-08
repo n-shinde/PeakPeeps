@@ -13,14 +13,14 @@ router = APIRouter(
 
 
 class Users(BaseModel):
-    name: str
+    username: str
     id: int 
     #date_joined: str
     #num_followers: int
     #banned: bool
 
 @router.post("/create_account")
-def post_create_account(username: str):
+def post_create_account(user_created: Users):
 
     with db.engine.begin() as connection:
         connection.execute(
@@ -29,7 +29,7 @@ def post_create_account(username: str):
 				INSERT INTO user (username)
 				VALUES (:name)
 				"""
-            ), [{"name": username}]
+            ), [{"name": user_created.username}]
         )
 
 @router.post("/add_follower")

@@ -13,10 +13,11 @@ router = APIRouter(
 
 
 class Users(BaseModel):
+    id: str
     username: str
-    #date_joined: str
-    #num_followers: int
-    #banned: bool
+    date_joined: str
+    num_followers: int
+    banned: bool
 
 @router.post("/create_account")
 def post_create_account(user_created: Users):
@@ -25,11 +26,13 @@ def post_create_account(user_created: Users):
         connection.execute(
             sqlalchemy.text(
                 """
-				INSERT INTO 'user' (username)
+				INSERT INTO user (username)
 				VALUES (:name)
 				"""
             ), [{'name': user_created.username}]
         )
+
+    return "OK"
 
 @router.post("/add_follower")
 def update_followers(user_to_update: Users, follower_to_add: Users):
@@ -109,9 +112,10 @@ def user_follows_other_user(user_requesting_follow: Users, other_user: Users):
                     """
                 ), [{"other_id": other_user.id}]
             )
-
     else:
        return "User you are trying to follow is banned."
+
+    return "OK"
 
 @router.post("/remove_follower")
 def remove_follower(user_id: int, follower_to_remove: str):
@@ -148,6 +152,7 @@ def remove_follower(user_id: int, follower_to_remove: str):
                 """
             ), [{"other_id": user_id}]
         )
+    return "OK"
 
 
 

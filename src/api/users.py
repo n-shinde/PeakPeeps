@@ -25,10 +25,10 @@ def post_create_account(user_created: Users):
         connection.execute(
             sqlalchemy.text(
                 """
-				INSERT INTO user (username)
+				INSERT INTO 'user' (username)
 				VALUES (:name)
 				"""
-            ), [{"name": user_created.username}]
+            ), [{'name': user_created.username}]
         )
 
 @router.post("/add_follower")

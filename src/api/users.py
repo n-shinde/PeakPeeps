@@ -19,7 +19,7 @@ class Users(BaseModel):
     #num_followers: int
     #banned: bool
 
-@router.put("/create_account")
+@router.post("/create_account")
 def post_create_account(username: str):
 
     with db.engine.begin() as connection:

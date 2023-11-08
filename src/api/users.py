@@ -13,7 +13,6 @@ router = APIRouter(
 
 
 class Users(BaseModel):
-    id: int 
     username: str
     #date_joined: str
     #num_followers: int

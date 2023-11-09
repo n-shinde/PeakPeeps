@@ -31,6 +31,20 @@ curl -X 'POST' \
 
 # Reviews
 
+## Add Review
+Curl:
+
+curl -X 'POST' \
+  'https://peak-peeps.onrender.com/reviews/add' \
+  -H 'accept: application/json' \
+  -H 'access_token: PeepCoins123!' \
+  -H 'Content-Type: application/json' \
+  -d '{
+  "user_id": 3,
+  "route_id": 7,
+  "description": "Horrible time ong",
+  "rating": 1
+}'
 
 # Peepcoins
 
@@ -109,8 +123,50 @@ curl -X 'POST' \
 ## Add Follower
 Curl:
 
+curl -X 'POST' \
+  'https://peak-peeps.onrender.com/users/add_follower' \
+  -H 'accept: application/json' \
+  -H 'access_token: PeepCoins123!' \
+  -H 'Content-Type: application/json' \
+  -d '{
+  "user_to_update": {
+    "username": "Lucas"
+  },
+  "follower_to_add": {
+    "username": "Steve"
+  }
+}'
 
+## Follow User
+Curl:
 
+curl -X 'POST' \
+  'https://peak-peeps.onrender.com/users/follow' \
+  -H 'accept: application/json' \
+  -H 'access_token: PeepCoins123!' \
+  -H 'Content-Type: application/json' \
+  -d '{
+  "user_requesting_follow": {
+    "username": "string1"
+  },
+  "other_user": {
+    "username": "Steve"
+  }
+}'
 
+## Remove Follower
+Curl:
 
-
+curl -X 'POST' \
+  'https://peak-peeps.onrender.com/users/remove_follower' \
+  -H 'accept: application/json' \
+  -H 'access_token: PeepCoins123!' \
+  -H 'Content-Type: application/json' \
+  -d '{
+  "user_to_update": {
+    "username": "Lucas"
+  },
+  "follower_to_remove": {
+    "username": "Steve"
+  }
+}'

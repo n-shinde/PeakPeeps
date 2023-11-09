@@ -34,7 +34,7 @@ def update_followers(user_to_update: Users, follower_to_add: Users):
         # Get the user to update id
         user_update_id = connection.execute(
             sqlalchemy.text(
-                 """
+                """
                 SELECT id
                 FROM user_test
                 WHERE username = :name
@@ -127,7 +127,7 @@ def user_follows_other_user(user_requesting_follow: Users, other_user: Users):
                     FROM user_test
                     WHERE username = :name
                 )
-                """
+            """
             ), [{"name": other_user.username}]
         )
 
@@ -140,11 +140,11 @@ def remove_follower(user_to_update: Users, follower_to_remove: Users):
         # Retrieve id of person to remove
         follower_to_remove_id = connection.execute(
             sqlalchemy.text(
-                """
-				SELECT id 
-                FROM user_test
-                WHERE username = :follower_name
-				"""
+            """
+			SELECT id 
+            FROM user_test
+            WHERE username = :follower_name
+			"""
             ), [{"follower_name": follower_to_remove.username}]
         ).scalar()
     

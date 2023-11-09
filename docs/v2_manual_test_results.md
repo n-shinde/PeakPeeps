@@ -47,7 +47,7 @@ curl -X 'POST' \
   "user_id": 1
 }'
 
-# Put PeepCoins
+## Put PeepCoins
 Curl Statement:
 
 curl -X 'PUT' \

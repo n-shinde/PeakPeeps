@@ -94,6 +94,23 @@ curl -X 'PUT' \
 
 # Users
 
+## Create Account
+Curl:
+
+curl -X 'POST' \
+  'https://peak-peeps.onrender.com/users/create_account' \
+  -H 'accept: application/json' \
+  -H 'access_token: PeepCoins123!' \
+  -H 'Content-Type: application/json' \
+  -d '{
+  "username": "Steve"
+}'
+
+## Add Follower
+Curl:
+
+
+
 
 
 

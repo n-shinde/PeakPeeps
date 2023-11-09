@@ -76,16 +76,16 @@ def get_popular_routes():
     return route_list
 
 
-@router.get("/friends")
-def get_friends_routes(friend_username: str):
+@router.get("/followers")
+def get_followers_routes(friend_username: str):
     with db.engine.begin() as connection:
         friend_id = connection.execute(
             sqlalchemy.text(
                 """
-				SELECT friend_id
-				FROM friendship
-				JOIN user ON user.id = friendship.friend_id
-				WHERE user.username = :username
+				SELECT follower_id
+				FROM followers
+				JOIN user_test ON user_test.id = followers.follower_id
+				WHERE user_test.username = :username
 				"""
             ),
             [{"username": friend_username}],

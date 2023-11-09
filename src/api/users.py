@@ -31,71 +31,52 @@ def post_create_account(user_created: Users):
 def update_followers(user_to_update: Users, follower_to_add: Users):
 
     with db.engine.begin() as connection:
-        isBanned = connection.execute(
+        # Get the user to update id
+        user_update_id = connection.execute(
+            sqlalchemy.text(
+                 """
+                SELECT id
+                FROM user_test
+                WHERE username = :name
+                """
+            ), [{"name": user_to_update.username}]
+        ).scalar()
+
+        # Get the follower to add id
+        follower_to_add_id = connection.execute(
             sqlalchemy.text(
                 """
-				SELECT banned 
+                SELECT id
                 FROM user_test
+                WHERE username = :name
+                """
+            ), [{"name": follower_to_add.username}]
+        ).scalar()
+
+        # First add new follower to followers table
+        connection.execute(
+            sqlalchemy.text(
+                """
+                INSERT INTO followers (id, follower_id)
+                VALUES (:id, :follower_id)
+                """
+            ), [{"id": user_update_id, "follower_id": follower_to_add_id}]
+        )
+
+        # Increment user's num followers by 1
+        connection.execute(
+            sqlalchemy.text(
+                """
+                UPDATE user_test 
+                SET num_followers = num_followers + 1
                 WHERE id = (
                     SELECT id
                     FROM user_test
-                    WHERE username = :follower_name
+                    WHERE username = :name
                 )
-				"""
-            ), [{"follower_name": follower_to_add.username}]
-        ).scalar()
-
-    if (isBanned == False):
-        with db.engine.begin() as connection:
-            # Get the user to update id
-            user_update_id = connection.execute(
-                sqlalchemy.text(
-                    """
-                    SELECT id
-                    FROM user_test
-                    WHERE username = :name
-                    """
-                ), [{"name": user_to_update.username}]
-            ).scalar()
-
-            # Get the follower to add id
-            follower_to_add_id = connection.execute(
-                sqlalchemy.text(
-                    """
-                    SELECT id
-                    FROM user_test
-                    WHERE username = :name
-                    """
-                ), [{"name": follower_to_add.username}]
-            ).scalar()
-
-            # First add new follower to followers table
-            connection.execute(
-                sqlalchemy.text(
-                    """
-                    INSERT INTO followers (id, follower_id)
-                    VALUES (:id, :follower_id)
-                    """
-                ), [{"id": user_update_id, "follower_id": follower_to_add_id}]
-            )
-
-            # Increment user's num followers by 1
-            connection.execute(
-                sqlalchemy.text(
-                    """
-                    UPDATE user_test 
-                    SET num_followers = num_followers + 1
-                    WHERE id = (
-                        SELECT id
-                        FROM user_test
-                        WHERE username = :name
-                    )
-                    """
-                ), [{"name": user_to_update.username}]
-            )
-
-    else:
-        return "User banned. Cannot follow this user."
+                """
+            ), [{"name": user_to_update.username}]
+        )
 
 
 
@@ -103,70 +84,52 @@ def update_followers(user_to_update: Users, follower_to_add: Users):
 def user_follows_other_user(user_requesting_follow: Users, other_user: Users):
 
     with db.engine.begin() as connection:
-        isBanned = connection.execute(
+        # Get the user requesting follow id
+        user_requesting_follow_id = connection.execute(
             sqlalchemy.text(
                 """
-				SELECT banned 
+                SELECT id
                 FROM user_test
+                WHERE username = :name
+                """
+            ), [{"name": user_requesting_follow.username}]
+        ).scalar()
+
+        # Get the other user id
+        other_user_id = connection.execute(
+            sqlalchemy.text(
+                """
+                SELECT id
+                FROM user_test
+                WHERE username = :name
+                """
+            ), [{"name": other_user.username}]
+        ).scalar()
+
+        # First add new follower to the other user's table
+        connection.execute(
+            sqlalchemy.text(
+                 """
+                INSERT INTO followers (id, follower_id)
+                VALUES (:other_id, :follower_id)
+                """
+            ), [{"other_id": other_user_id, "follower_id": user_requesting_follow_id}]
+        )
+
+        # Increment other user's followers by 1
+        connection.execute(
+            sqlalchemy.text(
+            """
+                UPDATE user_test
+                SET num_followers = num_followers + 1
                 WHERE id = (
                     SELECT id
                     FROM user_test
                     WHERE username = :name
                 )
-				"""
+                """
             ), [{"name": other_user.username}]
-        ).scalar()
-    
-    if (isBanned == False):
-       with db.engine.begin() as connection:
-            # Get the user requesting follow id
-            user_requesting_follow_id = connection.execute(
-                sqlalchemy.text(
-                    """
-                    SELECT id
-                    FROM user_test
-                    WHERE username = :name
-                    """
-                ), [{"name": user_requesting_follow.username}]
-            ).scalar()
-
-            # Get the other user id
-            other_user_id = connection.execute(
-                sqlalchemy.text(
-                    """
-                    SELECT id
-                    FROM user_test
-                    WHERE username = :name
-                    """
-                ), [{"name": other_user.username}]
-            ).scalar()
-
-            # First add new follower to the other user's table
-            connection.execute(
-                sqlalchemy.text(
-                    """
-                    INSERT INTO followers (id, follower_id)
-                    VALUES (:other_id, :follower_id)
-                    """
-                ), [{"other_id": other_user_id, "follower_id": user_requesting_follow_id}]
-            )
-
-            # Increment other user's followers by 1
-            connection.execute(
-                sqlalchemy.text(
-                    """
-                    UPDATE user_test
-                    SET num_followers = num_followers + 1
-                    WHERE id = (
-                        SELECT id
-                        FROM user_test
-                        WHERE username = :name
-                    )
-                    """
-                ), [{"name": other_user.username}]
-            )
-    else:
-       return "User you are trying to follow is banned."
+        )
 
     return "OK"
 

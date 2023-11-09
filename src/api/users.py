@@ -77,6 +77,8 @@ def update_followers(user_to_update: Users, follower_to_add: Users):
                 """
             ), [{"name": user_to_update.username}]
         )
+        
+    return "OK"
 
 
 

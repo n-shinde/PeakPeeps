@@ -1,5 +1,26 @@
 # Routes
 
+## Add Route
+Curl:
+
+curl -X 'POST' \
+  'https://peak-peeps.onrender.com/routes/add' \
+  -H 'accept: application/json' \
+  -H 'access_token: PeepCoins123!' \
+  -H 'Content-Type: application/json' \
+  -d '{
+  "name": "The Twister",
+  "user_id": 2,
+  "location": "Cayucos",
+  "coordinates": [
+    190,29
+  ],
+  "length": 18.8,
+  "difficulty": 9,
+  "activities": "Mountain Climbing, Hiking, Ocean View"
+}'
+
+## 
 ## Get Friends Routes
 Curl:
 

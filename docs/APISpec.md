@@ -177,7 +177,7 @@ Returns a list of routes a user's follower has visited on the app.
 
 ## 3. Reviews
 
-### 3.1. Write New Review - `/reviews/new` (POST)
+### 3.1. Add New Review - `/reviews/add` (POST)
 
 Creates a new review and posts it on the route page.
 
@@ -198,7 +198,7 @@ Creates a new review and posts it on the route page.
 ```json
 [
     {
-      "success": boolean
+      "OK"
     }
 ]
 ```

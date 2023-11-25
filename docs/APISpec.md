@@ -141,16 +141,16 @@ Returns a list of popular routes posted on the app.
 ]
 ```
 
-### 2.4. View Friends Routes - `/routes/friends` (GET)
+### 2.4. View Followers' Routes - `/routes/followers` (GET)
 
-Returns a list of routes a user's friend has visited on the app.
+Returns a list of routes a user's follower has visited on the app.
 
 **Request**:
 
 ```json
 [
   {
-    "friend_username": "string"   /* The username of the friend being searched up
+    "friend_username": "string"   /* The username of the follower being searched up
   }
 ]
 ```
@@ -163,8 +163,7 @@ Returns a list of routes a user's friend has visited on the app.
       [     /* List of routes with the following attributes displayed:
 
         "name": "string",
-        "date_added": "string",
-        "user_added": "string",
+        "user_id": "string",
         "location": "string",
         "coordinates": [lat, long],
         "length_in_miles": "double",

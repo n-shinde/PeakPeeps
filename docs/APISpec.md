@@ -123,7 +123,7 @@ Returns a list of popular routes posted on the app.
 ```json
 [
     {
-      [     /* List of routes with the following attributes displayed:
+     /* List of routes with the following attributes displayed:
 
         "name": "string",
         "date_added": "string",
@@ -135,8 +135,6 @@ Returns a list of popular routes posted on the app.
         "activities": "string",
         "popularity_index": int,
         "five_star_reviews": int
-
-      ]
     }
 ]
 ```
@@ -160,7 +158,7 @@ Returns a list of routes a user's follower has visited on the app.
 ```json
 [
     {
-      [     /* List of routes with the following attributes displayed:
+      /* List of routes with the following attributes displayed:
 
         "name": "string",
         "user_id": "string",
@@ -169,8 +167,6 @@ Returns a list of routes a user's follower has visited on the app.
         "length_in_miles": "double",
         "difficulty": "string",
         "activities": "string",
-
-      ]
     }
 ]
 ```

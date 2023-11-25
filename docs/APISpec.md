@@ -198,7 +198,7 @@ Creates a new review and posts it on the route page.
 ```json
 [
     {
-      "OK"
+      "success": "boolean"
     }
 ]
 ```
@@ -243,6 +243,6 @@ Executes coupon transaction using available PeepCoins.
 ```json
 {
   "success": "boolean",
-  "transaction_details": "string"
+  # Returns a string with a message if the transaction didn't go through (lack of money or invalid coupon)
 }
 ```

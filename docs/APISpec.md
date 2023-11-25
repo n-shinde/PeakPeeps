@@ -66,12 +66,11 @@ Adds a route to the list of routes available to view on the app.
 [
   {
     "name": "string",
-    "date_added": "string",
-    "user_added": "string",
+    "user_id": "string",   # id of user who added the route
     "location": "string",
     "coordinates": [lat, long],
-    "length_in_miles": "double",
-    "difficulty": "string",
+    "length": "float",
+    "difficulty": "int",
     "activities": "string",
   }
 ]

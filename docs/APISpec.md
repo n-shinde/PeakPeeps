@@ -213,7 +213,8 @@ Adds PeepCoins to user's account balance.
 
 ```json
 {
-  "coins_to_add": "integer"
+  "user_id": "integer",
+  "change": "integer"
 }
 ```
 

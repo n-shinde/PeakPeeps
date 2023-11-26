@@ -3,7 +3,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from src.api import auth
 from src import database as db
-from src.api.peepcoins import add_peepcoins_query
+from src.api.peepcoins import add_peepcoins
 
 router = APIRouter(
     prefix="/reviews",
@@ -40,11 +40,5 @@ def post_add_review(review_to_add: Reviews):
         )
 
         PEEP_COINS_FROM_POSTING_REVIEW = 5
-        connection.execute(
-            add_peepcoins_query,
-            {
-                "user_id": review_to_add.user_id,
-                "change": PEEP_COINS_FROM_POSTING_REVIEW,
-            },
-        )
+        add_peepcoins(review_to_add.user_id, PEEP_COINS_FROM_POSTING_REVIEW, connection)
     return "OK"

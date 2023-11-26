@@ -27,6 +27,6 @@ def add_business(request: Business):
                 VALUES (:name, :address)
                 """
             ),
-            [{"name": request.name, "address": request.address}],
+            {"name": request.name, "address": request.address},
         )
     return "OK"

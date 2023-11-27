@@ -3,7 +3,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from src.api import auth
 from src import database as db
-from src.api.peepcoins import add_peepcoins_query
+from src.api.peepcoins import add_peepcoins
 
 router = APIRouter(
     prefix="/routes",
@@ -48,10 +48,7 @@ def post_add_route(route_to_add: Routes):
         )
 
         PEEP_COINS_FROM_ADDING_ROUTE = 10
-        connection.execute(
-            add_peepcoins_query,
-            {"user_id": route_to_add.user_id, "change": PEEP_COINS_FROM_ADDING_ROUTE},
-        )
+        add_peepcoins(route_to_add.user_id, PEEP_COINS_FROM_ADDING_ROUTE, connection)
         return "OK"
 
 
@@ -88,7 +85,7 @@ def get_followers_routes(friend_username: str):
 				WHERE user_test.username = :username
 				"""
             ),
-            [{"username": friend_username}],
+            {"username": friend_username},
         ).scalars()
         friends = connection.execute(
             sqlalchemy.text(
@@ -98,7 +95,7 @@ def get_followers_routes(friend_username: str):
 				WHERE user_id = :friend_id
 				"""
             ),
-            [{"friend_id": friend_id}],
+            {"friend_id": friend_id},
         ).scalars()
 
     route_list = []
@@ -119,9 +116,9 @@ def report_route(route_to_report: Routes):
                 WHERE route.location = :location
                 """
             ),
-            [{"location": route_to_report.location}],
+            {"location": route_to_report.location},
         )
 
     status = "Reported"
     success = True
-    return [{"report_status": status, "flagged": success}]
+    return {"report_status": status, "flagged": success}

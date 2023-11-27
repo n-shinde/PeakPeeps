@@ -24,12 +24,20 @@ add_peepcoins_query = text(
 )
 
 
+def add_peepcoins(user_id, amount, connection):
+    query = text(
+        """
+        INSERT INTO user_peepcoin_ledger (user_id, change)
+        VALUES (:user_id, :change)
+        """
+    )
+    connection.execute(query, {"user_id": user_id, "change": amount})
+
+
 @router.put("/add")
 def put_add_peepcoins(request: PeepCoinRequest):
     with db.engine.begin() as connection:
-        connection.execute(
-            add_peepcoins_query, {"user_id": request.user_id, "change": request.change}
-        )
+        add_peepcoins(request.user_id, request.change, connection)
     return "OK"
 
 

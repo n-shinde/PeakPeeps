@@ -56,8 +56,7 @@ def post_buy_coupon(request: CouponRequest):
         is_valid = connection.execute(
             query, {"coupon_id": request.coupon_id}
         ).scalar_one()
-        print(is_valid)
-        if is_valid == "FALSE":
+        if not is_valid:
             return "coupon not valid"
 
         # checking if user can affording the transaction

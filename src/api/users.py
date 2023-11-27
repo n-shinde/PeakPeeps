@@ -136,27 +136,21 @@ def user_follows_other_user(user_requesting_follow: Users, other_user: Users):
 @router.post("/remove_follower")
 def remove_follower(user_to_update: Users, follower_to_remove: Users):
     with db.engine.begin() as connection:
-        # Retrieve id of person to remove
-        follower_to_remove_id = connection.execute(
-            sqlalchemy.text(
-                """
-			SELECT id 
-            FROM user_test
-            WHERE username = :follower_name
-			"""
-            ),
-            {"follower_name": follower_to_remove.username},
-        ).scalar()
+        follower_to_remove_id = get_id_from_username(follower_to_remove.id, connection)
+        user_to_update_id = get_id_from_username(user_to_update.id, connection)
 
         # Find them in followers table and remove
         connection.execute(
             sqlalchemy.text(
                 """
                 DELETE FROM followers
-                WHERE (id = (SELECT id FROM user_test WHERE username = :name)) and (follower_id = :remove_id)
+                WHERE (id = :user_to_update_id) and (follower_id = :remove_id)
                 """
             ),
-            {"name": user_to_update.username, "remove_id": follower_to_remove_id},
+            {
+                "user_to_update_id": user_to_update_id,
+                "remove_id": follower_to_remove_id,
+            },
         )
 
         # Decrement user follower list by 1
@@ -165,13 +159,9 @@ def remove_follower(user_to_update: Users, follower_to_remove: Users):
                 """
                 UPDATE user_test
                 SET num_followers = num_followers - 1
-                WHERE id = (
-                    SELECT id
-                    FROM user_test
-                    WHERE username = :name
-                )
+                WHERE id = :user_to_update_id
                 """
             ),
-            {"name": user_to_update.username},
+            {"user_to_update_id": user_to_update_id},
         )
     return "OK"

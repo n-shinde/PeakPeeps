@@ -1,5 +1,6 @@
 from sqlalchemy import text
 from fastapi import APIRouter, Depends, HTTPException
+from typing import Optional
 from pydantic import BaseModel
 from src.api import auth
 from src import database as db
@@ -36,4 +37,18 @@ def add_coupon(request: Coupons):
                 }
             ],
         )
+    return "OK"
+
+
+class EditCouponRequest(BaseModel):
+    business_name: str
+    coupon_name: str
+    new_coupon_name: Optional[str]
+    is_valid: Optional[str]
+    price: Optional[str]
+
+
+@router.post("/edit")
+def edit_coupon(request: EditCouponRequest):
+    # not implemented
     return "OK"

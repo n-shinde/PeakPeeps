@@ -50,7 +50,7 @@ class CouponRequest(BaseModel):
 def post_buy_coupon(request: CouponRequest):
     coupon_id = request.coupon_id
     user_id = request.user_id
-    with db.engine.begin() as connection:
+    with db.read_repeatable_engine.begin() as connection:
         # checking if the coupon is valid
         query = text("SELECT valid FROM coupons WHERE id = :coupon_id")
         is_valid = connection.execute(

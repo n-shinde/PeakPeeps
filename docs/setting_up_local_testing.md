@@ -12,6 +12,6 @@ How To Test Locally
 
    DEPLOYMENT_TYPE = development`
 
-6. install pytest (just run `pip install pytest`) in the peak peeps repo
+6. run `pip install -r requirements.txt` (a couple of new packages are needed for testing)
 7. run `pytest tests/test_integration.py`
 8. bonus points: you can test through VSCode using the left pane

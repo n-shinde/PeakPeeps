@@ -76,63 +76,6 @@ def update_followers(user_to_update: Users, follower_to_add: Users):
     return "OK"
 
 
-@router.post("/follow")
-def user_follows_other_user(user_requesting_follow: Users, other_user: Users):
-    with db.engine.begin() as connection:
-        # Get the user requesting follow id
-        user_requesting_follow_id = connection.execute(
-            sqlalchemy.text(
-                """
-                SELECT id
-                FROM user_test
-                WHERE username = :name
-                """
-            ),
-            {"name": user_requesting_follow.username},
-        ).scalar()
-
-        # Get the other user id
-        other_user_id = connection.execute(
-            sqlalchemy.text(
-                """
-                SELECT id
-                FROM user_test
-                WHERE username = :name
-                """
-            ),
-            {"name": other_user.username},
-        ).scalar()
-
-        # First add new follower to the other user's table
-        connection.execute(
-            sqlalchemy.text(
-                """
-                INSERT INTO followers (id, follower_id)
-                VALUES (:other_id, :follower_id)
-                """
-            ),
-            {"other_id": other_user_id, "follower_id": user_requesting_follow_id},
-        )
-
-        # Increment other user's followers by 1
-        connection.execute(
-            sqlalchemy.text(
-                """
-                UPDATE user_test
-                SET num_followers = num_followers + 1
-                WHERE id = (
-                    SELECT id
-                    FROM user_test
-                    WHERE username = :name
-                )
-            """
-            ),
-            {"name": other_user.username},
-        )
-
-    return "OK"
-
-
 @router.post("/remove_follower")
 def remove_follower(user_to_update: Users, follower_to_remove: Users):
     with db.engine.begin() as connection:

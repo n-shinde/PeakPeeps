@@ -1,5 +1,5 @@
 import sqlalchemy
-from fastapi import APIRouter, Depends, 
+from fastapi import APIRouter, Depends
 from pydantic import BaseModel
 from src.api import auth
 from src import database as db
@@ -13,6 +13,7 @@ router = APIRouter(
     dependencies=[Depends(auth.get_api_key)],
 )
 
+
 def get_id_from_route_name(route_name, connection):
     return connection.execute(
         sqlalchemy.text(
@@ -25,9 +26,10 @@ def get_id_from_route_name(route_name, connection):
         {"name": route_name},
     ).scalar()
 
+
 class Route(BaseModel):
     name: str
-    username: int  # username of user that added route
+    username: str  # username of user that added route
     coordinates: list[float]
     address: Optional[str]
     length: float  # in miles
@@ -39,13 +41,14 @@ class Route(BaseModel):
 def post_add_route(route_to_add: Route):
     with db.engine.begin() as connection:
         user_id = get_id_from_username(route_to_add.username, connection)
-        connection.execute(
+        new_id = connection.execute(
             sqlalchemy.text(
                 """
 				INSERT INTO routes (name, added_by_user_id, address, 
 				city, state, length_in_miles, coordinates)
-				VALUES (:name, :username, :address, :city,
+				VALUES (:name, :added_by_user_id, :address, :city,
 				:state, :length, :coordinates)
+                RETURNING id
 				"""
             ),
             [
@@ -53,17 +56,17 @@ def post_add_route(route_to_add: Route):
                     "name": route_to_add.name,
                     "added_by_user_id": user_id,
                     "address": route_to_add.address,
-                    "length_in_miles": route_to_add.length,
+                    "length": route_to_add.length,
                     "coordinates": route_to_add.coordinates,
                     "state": route_to_add.state,
                     "city": route_to_add.city,
                 }
             ],
-        )
+        ).scalar_one()
 
         PEEP_COINS_FROM_ADDING_ROUTE = 10
         add_peepcoins(user_id, PEEP_COINS_FROM_ADDING_ROUTE, connection)
-        return "OK"
+        return new_id
 
 
 @router.get("/popular")
@@ -120,17 +123,17 @@ def get_followers_routes(friend_username: str):
 
 
 @router.post("/report")
-def report_route(route_to_report: Routes):
+def report_route(route_name: str):
     with db.engine.begin() as connection:
         connection.execute(
             sqlalchemy.text(
                 """
-                UPDATE route
+                UPDATE routes
                 SET reported = True
-                WHERE route.location = :location
+                WHERE routes.name = :name
                 """
             ),
-            {"location": route_to_report.location},
+            {"location": route_name},
         )
 
     status = "Reported"

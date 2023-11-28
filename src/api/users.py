@@ -19,12 +19,12 @@ class Users(BaseModel):
 @router.post("/create_account")
 def post_create_account(user_created: Users):
     with db.engine.begin() as connection:
-        connection.execute(
-            sqlalchemy.text("INSERT INTO user_test (username) VALUES (:name)"),
+        new_id = connection.execute(
+            sqlalchemy.text("INSERT INTO users (username) VALUES (:name) RETURNING id"),
             {"name": user_created.username},
-        )
+        ).scalar_one()
 
-    return "OK"
+        return new_id
 
 
 def get_id_from_username(username, connection):
@@ -32,7 +32,7 @@ def get_id_from_username(username, connection):
         sqlalchemy.text(
             """
                 SELECT id
-                FROM user_test
+                FROM users
                 WHERE username = :name
                 """
         ),

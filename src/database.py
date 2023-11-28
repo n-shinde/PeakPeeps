@@ -7,6 +7,9 @@ from src import database as db
 
 def database_connection_url():
     dotenv.load_dotenv()
+    deployment_type = os.environ.get("DEPLOYMENT_TYPE")
+    if deployment_type == "development":
+        return os.environ.get("DEVELOPMENT_POSTGRES_URI")
     return os.environ.get("POSTGRES_URI")
 
 

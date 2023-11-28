@@ -7,6 +7,7 @@ from src.api import peepcoins
 from src.api import businesses
 from src.api import coupons
 from src.api import users
+from src.api import admin
 import json
 import logging
 import sys
@@ -45,6 +46,7 @@ app.include_router(peepcoins.router)
 app.include_router(businesses.router)
 app.include_router(coupons.router)
 app.include_router(users.router)
+app.include_router(admin.router)
 
 
 @app.exception_handler(exceptions.RequestValidationError)

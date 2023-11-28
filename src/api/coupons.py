@@ -50,5 +50,4 @@ class EditCouponRequest(BaseModel):
 
 @router.post("/edit")
 def edit_coupon(request: EditCouponRequest):
-    # not implemented
     return "OK"

@@ -13,10 +13,7 @@ router = APIRouter(
 
 
 class Users(BaseModel):
-    # id: str
     username: str
-    # num_followers: int
-    # banned: bool
 
 
 @router.post("/create_account")
@@ -47,8 +44,8 @@ def get_id_from_username(username, connection):
 def update_followers(user_to_update: Users, follower_to_add: Users):
     with db.engine.begin() as connection:
         # Get the user to update id
-        user_update_id = get_id_from_username(user_to_update.username)
-        follower_to_add_id = get_id_from_username(follower_to_add.username)
+        user_update_id = get_id_from_username(user_to_update.username, connection)
+        follower_to_add_id = get_id_from_username(follower_to_add.username, connection)
 
         # First add new follower to followers table
         connection.execute(
@@ -79,8 +76,10 @@ def update_followers(user_to_update: Users, follower_to_add: Users):
 @router.post("/remove_follower")
 def remove_follower(user_to_update: Users, follower_to_remove: Users):
     with db.engine.begin() as connection:
-        follower_to_remove_id = get_id_from_username(follower_to_remove.id, connection)
-        user_to_update_id = get_id_from_username(user_to_update.id, connection)
+        follower_to_remove_id = get_id_from_username(
+            follower_to_remove.username, connection
+        )
+        user_to_update_id = get_id_from_username(user_to_update.username, connection)
 
         # Find them in followers table and remove
         connection.execute(

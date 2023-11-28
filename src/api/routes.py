@@ -1,9 +1,11 @@
 import sqlalchemy
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, 
 from pydantic import BaseModel
 from src.api import auth
 from src import database as db
 from src.api.peepcoins import add_peepcoins
+from src.api.users import get_id_from_username
+from typing import Optional
 
 router = APIRouter(
     prefix="/routes",
@@ -11,44 +13,56 @@ router = APIRouter(
     dependencies=[Depends(auth.get_api_key)],
 )
 
+def get_id_from_route_name(route_name, connection):
+    return connection.execute(
+        sqlalchemy.text(
+            """
+                SELECT id
+                FROM routes
+                WHERE name = :name
+                """
+        ),
+        {"name": route_name},
+    ).scalar()
 
-class Routes(BaseModel):
+class Route(BaseModel):
     name: str
-    user_id: int  # id of user that added route
-    location: str
+    username: int  # username of user that added route
     coordinates: list[float]
-    length: float
-    difficulty: int
-    activities: str
+    address: Optional[str]
+    length: float  # in miles
+    city: Optional[str]
+    state: Optional[str]
 
 
 @router.post("/add")
-def post_add_route(route_to_add: Routes):
+def post_add_route(route_to_add: Route):
     with db.engine.begin() as connection:
+        user_id = get_id_from_username(route_to_add.username, connection)
         connection.execute(
             sqlalchemy.text(
                 """
-				INSERT INTO route (name, user_id, location, 
-				length_in_miles, difficulty, activities, coords)
-				VALUES (:name, :user_id, :location, :length_in_miles,
-				:difficulty, :activities, :coords)
+				INSERT INTO routes (name, added_by_user_id, address, 
+				city, state, length_in_miles, coordinates)
+				VALUES (:name, :username, :address, :city,
+				:state, :length, :coordinates)
 				"""
             ),
             [
                 {
                     "name": route_to_add.name,
-                    "user_id": route_to_add.user_id,
-                    "location": route_to_add.location,
+                    "added_by_user_id": user_id,
+                    "address": route_to_add.address,
                     "length_in_miles": route_to_add.length,
-                    "difficulty": route_to_add.difficulty,
-                    "activities": route_to_add.activities,
-                    "coords": route_to_add.coordinates,
+                    "coordinates": route_to_add.coordinates,
+                    "state": route_to_add.state,
+                    "city": route_to_add.city,
                 }
             ],
         )
 
         PEEP_COINS_FROM_ADDING_ROUTE = 10
-        add_peepcoins(route_to_add.user_id, PEEP_COINS_FROM_ADDING_ROUTE, connection)
+        add_peepcoins(user_id, PEEP_COINS_FROM_ADDING_ROUTE, connection)
         return "OK"
 
 

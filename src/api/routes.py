@@ -303,3 +303,25 @@ def report_route(route_name: str):
     status = "Reported"
     success = True
     return {"report_status": status, "flagged": success}
+
+
+@router.post("/complete")
+def complete_route(route_name: str,username: str):
+    with db.engine.begin() as connection:
+        connection.execute(
+            sqlalchemy.text(
+                """
+                UPDATE routes
+                SET num_completed = num_completed + 1
+                WHERE routes.name = :name
+                """
+            ),
+            {"name": route_name},
+        )
+	    
+	user_id = get_id_from_username(username, connection)
+	PEEP_COINS_FROM_COMPLETING_ROUTE = 15
+        add_peepcoins(user_id, PEEP_COINS_FROM_COMPLETING_ROUTE, connection)
+    
+    return {"OK"}
+

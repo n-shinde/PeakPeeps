@@ -6,12 +6,176 @@ from src import database as db
 from src.api.peepcoins import add_peepcoins
 from src.api.users import get_id_from_username
 from typing import Optional
+from enum import Enum
 
 router = APIRouter(
     prefix="/routes",
     tags=["routes"],
     dependencies=[Depends(auth.get_api_key)],
 )
+
+class search_sort_options(str, Enum):
+    route_name = "route_name"
+    length_miles = "length_miles"
+    city = "city"
+
+class search_sort_order(str, Enum):
+    asc = "asc"
+    desc = "desc"   
+
+@router.get("/search/")
+def search_orders(
+    route_name: str = "",
+    user_added: str = "",
+    search_page: str = "",
+    sort_col: search_sort_options = search_sort_options.route_name,
+    sort_order: search_sort_order = search_sort_order.desc,
+):
+    """
+    Search for routes items by route_name and/or potion.
+
+    Route name and user sku filter to orders that contain the 
+    string (case insensitive). If the filters aren't provided, no
+    filtering occurs on the respective search term.
+
+    Search page is a cursor for pagination. The response to this
+    search endpoint will return previous or next if there is a
+    previous or next page of results available. The token passed
+    in that search response can be passed in the next search request
+    as search page to get that page of results.
+
+    Sort col is which column to sort by and sort order is the direction
+    of the search. They default to searching by timestamp of the order
+    in descending order.
+
+    The response itself contains a previous and next page token (if
+    such pages exist) and the results as an array of line items. Each
+    line item contains the line item id (must be unique), item sku, 
+    customer name, line item total (in gold), and timestamp of the order.
+    Your results must be paginated, the max results you can return at any
+    time is 5 total line items.
+    """
+
+    sort_by_col = "name"
+
+    sort_by_order = "desc"
+
+
+    if sort_col == search_sort_options.length_miles:
+        sort_by_col = "length_in_miles"
+
+    elif sort_col == search_sort_options.city:
+        sort_by_col = "city"
+
+    if sort_order == search_sort_order.asc:
+        sort_by_order = 'asc'
+
+
+
+
+    page_size = 5
+
+    # Determine the offset based on the search_page token
+
+    if search_page == "":
+        offset = 0
+
+    else:
+        offset = int(search_page)
+
+
+
+    # Not negative
+    if offset - 5 >= 0:
+        prev_page = str(offset - 5)
+
+    else:
+        prev_page = ""
+
+    with db.engine.begin() as connection:
+        result_len = connection.execute(
+            sqlalchemy.text(
+                f"""
+                SELECT COUNT(*)
+                FROM
+                routes
+                JOIN users ON 
+                    users.id = routes.added_by_user_id
+                """
+            )
+        )
+
+    len_of_data = result_len.scalar()
+    print(len_of_data)
+
+
+    query = f"""
+                SELECT
+                routes.name AS name,
+                routes.length_in_miles AS length_miles,
+                routes.city AS city,
+                routes.added_by_user_id AS user
+
+                FROM routes
+
+                JOIN users ON 
+                    users.id = routes.added_by_user_id
+
+                AND routes.name ILIKE '%{route_name}%'
+                AND routes.name ILIKE '%{user_added}%'
+                ORDER BY
+                {sort_by_col} {sort_by_order}
+                LIMIT {page_size}
+                OFFSET {offset};
+
+                """
+    with db.engine.begin() as connection:
+        result = connection.execute(
+            sqlalchemy.text(
+                query
+            )
+        )
+
+
+    # Fetch all rows from the result
+    data = result.fetchall()
+    lst = []
+
+    print(data)
+    print(len(data))
+
+    
+    # Not negative
+    if offset + 5 > len(data):
+        next_page = ""
+
+    else:
+        next_page = str(offset + 5)
+
+
+    for row in data:
+
+        print(row.name)
+        print(row.length_miles)
+        print(row.city)
+        print(row.user)
+
+        lst.append(
+            {
+                    "route_name": row.name,
+                    "length_miles": row.length_miles,
+                    "city": row.city,
+                    "user": row.user,
+            }
+        )
+
+    return {
+        "previous": prev_page,
+        "next": next_page,
+        "results": lst
+    }
+
+
 
 
 def get_id_from_route_name(route_name, connection):

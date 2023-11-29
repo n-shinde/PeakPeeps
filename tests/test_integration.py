@@ -4,6 +4,8 @@ import pytest
 from fastapi.testclient import TestClient
 from fastapi.security.api_key import APIKeyHeader
 from fastapi import Security, Request
+import os
+import dotenv
 
 from src.api.admin import reset
 from src import database as db
@@ -12,6 +14,7 @@ from src.api.server import app
 from src.api import users
 from src.api import routes
 from src.api import peepcoins
+from src.api import coupons
 from src.api.auth import get_api_key
 
 client = TestClient(app)
@@ -29,18 +32,25 @@ app.dependency_overrides[get_api_key] = get_api_key_override
 
 @pytest.fixture
 def test_data():
+    dotenv.load_dotenv()
+    deployment_type = os.environ.get("DEPLOYMENT_TYPE")
+    if deployment_type != "development":
+        raise Exception(
+            f"Deployment type in the env must be development, got {deployment_type}"
+        )
+
     reset()
     with db.engine.begin() as connection:
         queries = []
         queries.append("INSERT INTO users (id, username) VALUES (1, 'Bob')")
         queries.append(
-            "INSERT INTO business (id, name, address, commissions_rate) VALUES (1, 'Fired and Loaded', '13 Santa Rosa St, San Luis Obispo, CA 93405', 0.9)"
+            "INSERT INTO business (id, name, address, commissions_rate) VALUES (1, 'Fried and Loaded', '13 Santa Rosa St, San Luis Obispo, CA 93405', 0.9)"
         )
         queries.append(
             "INSERT INTO coupons (id, name, valid, business_id, price) VALUES (1, 'Half off Smashburger', True, 1, 25)"
         )
         queries.append(
-            "INSERT INTO coupons (id, name, valid, business_id, price) VALUES (2, 'GOGO Milk Shakes', False, 1, 10)"
+            "INSERT INTO coupons (id, name, valid, business_id, price) VALUES (2, 'BOGO Milk Shakes', False, 1, 10)"
         )
         for query in queries:
             connection.execute(text(query))
@@ -115,12 +125,34 @@ def test_buy_coupon_no_money(test_data):
         connection.execute(query)
         connection.commit()
 
-    request = peepcoins.CouponRequest(coupon_id=1, user_id=1)
-    result = peepcoins.post_buy_coupon(request)
+    request = coupons.CouponRequest(coupon_id=1, user_id=1)
+    result = coupons.post_buy_coupon(request)
     assert result == "user can't afford coupon"
 
 
 def test_buy_invalid_coupon(test_data):
-    request = peepcoins.CouponRequest(coupon_id=2, user_id=1)
-    result = peepcoins.post_buy_coupon(request)
+    request = coupons.CouponRequest(coupon_id=2, user_id=1)
+    result = coupons.post_buy_coupon(request)
     assert result == "coupon not valid"
+
+
+def test_edit_coupon(test_data):
+    request = coupons.EditCouponRequest(
+        business_name="Fried and Loaded",
+        coupon_name="Half off Smashburger",
+        price=50,
+        new_coupon_name=None,
+        is_valid=None,
+    )
+
+    result = coupons.edit_coupon(request)
+    assert result == "OK"
+
+
+def test_get_coupon(test_data):
+    request = coupons.GetCouponRequest(
+        business_name="Fried and Loaded", coupon_name="Half off Smashburger"
+    )
+    result = coupons.get_coupon(request)
+    assert result.price == 25
+    assert result.valid == True

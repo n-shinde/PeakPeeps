@@ -239,11 +239,11 @@ def get_popular_routes():
         popular_routes = connection.execute(
             sqlalchemy.text(
                 """
-				SELECT name, date_added, location, length_in_miles,difficulty, activities, coords
-				FROM route
-				JOIN review ON route.id = review.route_id
-				WHERE review.rating >= 4
-				"""
+		SELECT name, date_added, location, length_in_miles,difficulty, activities, coords
+		FROM route
+		JOIN review ON route.id = review.route_id
+		WHERE review.rating >= 4
+		"""
             )
         ).scalars()
 

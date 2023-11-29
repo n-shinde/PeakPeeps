@@ -171,6 +171,40 @@ Returns a list of routes a user's follower has visited on the app.
 ]
 ```
 
+### 2.5. Search for Routes - `/routes/search` (GET)
+
+Returns a list of routes a user's follower has visited on the app.
+
+**Request**:
+
+```json
+/* Optional input search parameters and search order
+
+class search_sort_options(str, Enum): 
+    route_name = "route_name"
+    length_miles = "length_miles"
+    city = "city"
+
+class search_sort_order(str, Enum):
+    asc = "asc"
+    desc = "desc" 
+```
+
+**Returns**:
+
+```json
+[
+    {
+      /* List of routes with the following attributes displayed:
+
+        "name": "string",
+        "length_miles": "double",
+        "location": "string",
+        "user": "string",
+    }
+]
+```
+
 ## 3. Reviews
 
 ### 3.1. Add New Review - `/reviews/add` (POST)

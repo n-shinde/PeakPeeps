@@ -40,6 +40,19 @@ def add_coupon(request: Coupons):
     return "OK"
 
 
+@router.post("/business/{business_id}")
+def get_valid_coupons_from_business(business_id: int):
+    with db.engine.begin() as connection:
+        query = text(
+            "SELECT name, price from coupons WHERE business_id = :id AND valid"
+        )
+        result = connection.execute(query, {"id": business_id}).all()
+        if not result:
+            return f"failed to look up coupons for business_id: {business_id}"
+
+        return [row._asdict() for row in result]
+
+
 class EditCouponRequest(BaseModel):
     business_name: str
     coupon_name: str

@@ -4,9 +4,7 @@ Problem:
 
 Robin and Alex are both co-owners for their smash burger truck and they are offering a coupon for half off a burger and shake combo. At nearly the same time, Alex edits the coupon to change the price to be 30 PeepCoins and Robin edits the coupon to be 40 PeepCoins. When these two requests interleave, there’s a chance for the first update that goes through to be lost.
 
-
-[![Diagram:](https://github.com/n-shinde/PeakPeeps/assets/104091934/e576b0d7-f65a-48c8-837e-5958bd0130a9)
-](https://github.com/n-shinde/PeakPeeps/issues/34#issue-2019737890)
+![Diagram:](https://github.com/n-shinde/PeakPeeps/assets/71895570/768cbae5-cce2-46ec-bf94-aa0d56943366)
 
 Solution:
 

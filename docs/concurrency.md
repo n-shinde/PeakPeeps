@@ -1,19 +1,16 @@
-**Case 1: Lost Update with PeepCoin Balances**
+**Case 1: Lost Updates with Editing Coupons**
 
 Problem:
 
-In this situation, a user Lucas has a balance of 100 PeepCoins. 
-He decides to go on a 20-mile hike to complete a challenge on the app, so he logs his hike, 
-which updates his PeepCoin balance by adding 50 PeepCoins. After the hike, he’s very hungry, so he visits a 
-local sandwich shop and redeems a coupon worth 20 PeepCoins for a free BLT. As a result, 20 PeepCoins are deducted 
-from the original balance, and not the updated balance, so he appears to have 100-20 = 80 PeepCoins. 
-But he doesn’t see the update where 50 PeepCoins were also added from completing the hike. 
+Robin and Alex are both co-owners for their smash burger truck and they are offering a coupon for half off a burger and shake combo. At nearly the same time, Alex edits the coupon to change the price to be 30 PeepCoins and Robin edits the coupon to be 40 PeepCoins. When these two requests interleave, there’s a chance for the first update that goes through to be lost.
 
-![Diagram:](https://github.com/n-shinde/PeakPeeps/assets/104091934/e576b0d7-f65a-48c8-837e-5958bd0130a9)
+
+[![Diagram:](https://github.com/n-shinde/PeakPeeps/assets/104091934/e576b0d7-f65a-48c8-837e-5958bd0130a9)
+](https://github.com/n-shinde/PeakPeeps/issues/34#issue-2019737890)
 
 Solution:
 
-To avoid lost updates with PeepCoin balances, we have created a separate table called user_peepcoin_ledger that keeps records of every transaction that involves changing the PeepCoin balance of a user. When any function that executes any transaction involving PeepCoins is called, the user_peepcoin_ledger is updated, with a “change” column that stores the amount added or subtracted from executing the transaction. Then, if the balance of the user needs to be retrieved, the “change” column is summed up and returned as the current balance, instead of storing the balance in a variable and adding or subtracting from it. This prevents lost updates as every transaction is being stored in the ledger with the changes in real time. 
+We put a write lock on the code so that the second user can’t update the table at the same time as the first user, and returns an error saying “Could not find a coupon from business {request.business_name} for coupon {request.coupon_name}”. 
 
 **Case 2: Phantom Read**
 

@@ -19,6 +19,7 @@ class Coupons(BaseModel):
     cost: int
 
 
+@db.handle_errors
 @router.put("/add")
 def add_coupon(request: Coupons):
     with db.engine.begin() as connection:
@@ -40,6 +41,7 @@ def add_coupon(request: Coupons):
     return "OK"
 
 
+@db.handle_errors
 @router.post("/business/{business_id}")
 def get_valid_coupons_from_business(business_id: int):
     with db.engine.begin() as connection:
@@ -61,6 +63,7 @@ class EditCouponRequest(BaseModel):
     price: Optional[int]
 
 
+@db.handle_errors
 @router.post("/edit")
 def edit_coupon(request: EditCouponRequest):
     with db.engine.begin() as connection:
@@ -101,6 +104,7 @@ class GetCouponRequest(BaseModel):
     coupon_name: str
 
 
+@db.handle_errors
 @router.post("/get")
 def get_coupon(request: GetCouponRequest):
     with db.engine.begin() as connection:
@@ -127,6 +131,7 @@ class CouponRequest(BaseModel):
     user_id: int
 
 
+@db.handle_errors
 @router.post("/purchase")
 def post_buy_coupon(request: CouponRequest):
     # wrapping function like this so we can test the body of it seperately
@@ -136,6 +141,7 @@ def post_buy_coupon(request: CouponRequest):
         return buy_coupon(coupon_id, user_id, connection)
 
 
+@db.handle_errors
 def buy_coupon(coupon_id: int, user_id: int, connection):
     # checking if the coupon is valid
     query = text("SELECT valid FROM coupons WHERE id = :coupon_id")

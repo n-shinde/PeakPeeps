@@ -26,6 +26,7 @@ class search_sort_order(str, Enum):
     desc = "desc"
 
 
+@db.handle_errors
 @router.get("/search/")
 def search_orders(
     route_name: str = "",
@@ -160,6 +161,7 @@ def search_orders(
     return {"previous": prev_page, "next": next_page, "results": lst}
 
 
+@db.handle_errors
 def get_id_from_route_name(route_name, connection):
     return connection.execute(
         sqlalchemy.text(
@@ -183,6 +185,7 @@ class Route(BaseModel):
     state: Optional[str]
 
 
+@db.handle_errors
 @router.post("/add")
 def post_add_route(route_to_add: Route):
     with db.engine.begin() as connection:
@@ -215,6 +218,7 @@ def post_add_route(route_to_add: Route):
         return new_id
 
 
+@db.handle_errors
 @router.get("/popular")
 def get_popular_routes():
     with db.engine.begin() as connection:
@@ -236,6 +240,7 @@ def get_popular_routes():
     return route_list
 
 
+@db.handle_errors
 @router.get("/followers")
 def get_followers_routes(friend_username: str):
     with db.engine.begin() as connection:
@@ -288,6 +293,7 @@ def report_route(route_name: str):
     return {"report_status": status, "flagged": success}
 
 
+@db.handle_errors
 @router.post("/complete")
 def complete_route(route_name: str, username: str):
     with db.engine.begin() as connection:

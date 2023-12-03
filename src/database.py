@@ -1,6 +1,7 @@
 import os
 import dotenv
 import sqlalchemy
+import sqlalchemy.exc
 from sqlalchemy import create_engine
 from src import database as db
 
@@ -21,3 +22,40 @@ read_repeatable_engine = create_engine(
 )
 
 
+### Error Handling Section ###
+class FailedLookup(Exception):
+    def __init__(self, message="Failed to look up id"):
+        self.message = message
+        super().__init__(self.message)
+
+
+def get_id_from_username(username, connection):
+    try:
+        return connection.execute(
+            sqlalchemy.text(
+                """
+                    SELECT id
+                    FROM users
+                    WHERE username = :name
+                    """
+            ),
+            {"name": username},
+        ).scalar_one()
+    except sqlalchemy.exc.NoResultFound:
+        raise FailedLookup(f"can't find user {username}")
+
+
+# Doing some magic with decorators. Check out this video look behind the curtain
+# https://www.youtube.com/watch?v=BE-L7xu8pO4
+# But basically, if we decorate our functions with this, we can do all the error handling here,
+# So we don't have to do it to every function individually
+def handle_errors(func):
+    def wrapper(*args, **kwargs):
+        try:
+            func(*args, **kwargs)
+        except FailedLookup as e:
+            return e.message
+        except sqlalchemy.exc.NoResultFound as e:
+            return e
+
+    return wrapper

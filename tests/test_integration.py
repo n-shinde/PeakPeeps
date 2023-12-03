@@ -6,6 +6,7 @@ from fastapi.security.api_key import APIKeyHeader
 from fastapi import Security, Request
 import os
 import dotenv
+import sqlalchemy
 from src.api import businesses
 
 from src.api.admin import reset
@@ -61,6 +62,9 @@ def test_data():
         )
         queries.append(
             "INSERT INTO coupons (id, name, valid, business_id, price) VALUES (3, 'An Invalid coupon', False, 2, 5)"
+        )
+        queries.append(
+            "INSERT INTO routes (id, name, address, city, state, length_in_miles, added_by_user_id, coordinates, reported) VALUES (1, 'Bishop Peak', 'Patricia Drive', 'San Luis Obispo', 'CA', 3.7, 1, ARRAY[35.30327857570746, -120.69743771424115], FALSE)"
         )
         for query in queries:
             connection.execute(text(query))
@@ -192,7 +196,26 @@ def test_remove_followers(test_data):
     assert alice["num_followers"] == 0
 
 
-def test_fail_user_lookup(test_data):
+def test_update_followers_non_existsant(test_data):
+    result = users.update_followers("Gwen", "Eve")
+    assert result == "can't find user Gwen"
+
+
+def test_update_followers_non_existsant_2(test_data):
+    result = users.update_followers("Eve", "Gwen")
+    assert result == "can't find user Gwen"
+
+
+def test_report_route(test_data):
+    routes.report_route("Bishop Peak")
     with db.engine.begin() as connection:
-        result = users.get_id_from_username("Alex", connection)
-        assert "can't find user Alex" == result
+        query = text("SELECT * FROM routes WHERE name = 'Bishop Peak'")
+        result = connection.execute(query).one()
+        assert result.reported == True
+
+
+def test_report_route_nonexistant(test_data):
+    result = routes.report_route("I don't exists")
+    assert result == "Can't find 'I don't exist'"
+    # doesn't have to be this result exactlty,
+    # but we should have some error message that the lookup failed

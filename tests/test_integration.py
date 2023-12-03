@@ -104,18 +104,13 @@ def test_buy_coupon(test_data):
             "INSERT INTO user_peepcoin_ledger (user_id, change) VALUES (1, 30)"
         )
         connection.execute(query)
-        connection.commit()
-
-    request = {"coupon_id": 1, "user_id": 1}
-    client.post("/peepcoins/purchase/coupon", json=request)
-
-    with db.engine.begin() as connection:
+        coupons.buy_coupon(1, 1, connection)
         query = "select sum(change) from user_coupon_ledger WHERE user_id = 1 and coupon_id = 1"
-        coupons = connection.execute(text(query)).scalar_one()
+        coupon_result = connection.execute(text(query)).scalar_one()
+        assert coupon_result == 1
 
         query = "select sum(change) from user_peepcoin_ledger where user_id = 1"
         balance = connection.execute(text(query)).scalar_one()
-        assert coupons == 1
         assert balance == 5
 
 
@@ -138,7 +133,7 @@ def test_buy_invalid_coupon(test_data):
 
 def test_edit_coupon(test_data):
     request = coupons.EditCouponRequest(
-        business_name="Fried and Loaded",
+        business_id=1,
         coupon_name="Half off Smashburger",
         price=50,
         new_coupon_name=None,
@@ -151,8 +146,9 @@ def test_edit_coupon(test_data):
 
 def test_get_coupon(test_data):
     request = coupons.GetCouponRequest(
-        business_name="Fried and Loaded", coupon_name="Half off Smashburger"
+        business_id=1, coupon_name="Half off Smashburger"
     )
     result = coupons.get_coupon(request)
     assert result.price == 25
     assert result.valid == True
+

@@ -129,10 +129,11 @@ class CouponRequest(BaseModel):
 
 @router.post("/purchase")
 def post_buy_coupon(request: CouponRequest):
+    # wrapping function like this so we can test the body of it seperately
     coupon_id = request.coupon_id
     user_id = request.user_id
     with db.read_repeatable_engine.begin() as connection:
-        buy_coupon(coupon_id, user_id, connection)
+        return buy_coupon(coupon_id, user_id, connection)
 
 
 def buy_coupon(coupon_id: int, user_id: int, connection):

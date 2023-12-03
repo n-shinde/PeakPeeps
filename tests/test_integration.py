@@ -6,10 +6,12 @@ from fastapi.security.api_key import APIKeyHeader
 from fastapi import Security, Request
 import os
 import dotenv
+from src.api import businesses
 
 from src.api.admin import reset
 from src import database as db
 from sqlalchemy import text
+from src.api.businesses import list_businesses
 from src.api.server import app
 from src.api import users
 from src.api import routes
@@ -47,10 +49,16 @@ def test_data():
             "INSERT INTO business (id, name, address, commissions_rate) VALUES (1, 'Fried and Loaded', '13 Santa Rosa St, San Luis Obispo, CA 93405', 0.9)"
         )
         queries.append(
+            "INSERT INTO business (id, name, address, commissions_rate) VALUES (2, 'SQL Tea', '3845 S Higuera St Ste 100, San Luis Obispo, CA 93401', 0.95)"
+        )
+        queries.append(
             "INSERT INTO coupons (id, name, valid, business_id, price) VALUES (1, 'Half off Smashburger', True, 1, 25)"
         )
         queries.append(
             "INSERT INTO coupons (id, name, valid, business_id, price) VALUES (2, 'BOGO Milk Shakes', False, 1, 10)"
+        )
+        queries.append(
+            "INSERT INTO coupons (id, name, valid, business_id, price) VALUES (3, 'An Invalid coupon', False, 2, 5)"
         )
         for query in queries:
             connection.execute(text(query))
@@ -152,3 +160,14 @@ def test_get_coupon(test_data):
     assert result.price == 25
     assert result.valid == True
 
+
+def test_list_businesses(test_data):
+    request = businesses.ListBusinessesRequest(should_have_valid_coupon=True)
+    result = list_businesses(request)
+    assert [
+        {
+            "address": "13 Santa Rosa St, San Luis Obispo, CA 93405",
+            "id": 1,
+            "name": "Fried and Loaded",
+        }
+    ] == result

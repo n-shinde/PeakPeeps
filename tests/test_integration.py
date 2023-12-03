@@ -45,6 +45,8 @@ def test_data():
     with db.engine.begin() as connection:
         queries = []
         queries.append("INSERT INTO users (id, username) VALUES (1, 'Bob')")
+        queries.append("INSERT INTO users (id, username) VALUES (2, 'Alice')")
+        queries.append("INSERT INTO users (id, username) VALUES (3, 'Eve')")
         queries.append(
             "INSERT INTO business (id, name, address, commissions_rate) VALUES (1, 'Fried and Loaded', '13 Santa Rosa St, San Luis Obispo, CA 93405', 0.9)"
         )
@@ -66,8 +68,7 @@ def test_data():
 
 def test_add_user(test_data):
     # setting up
-    request = users.Users(username="Paul")
-    new_id = users.post_create_account(request)
+    new_id = users.post_create_account("Paul")
 
     with db.engine.begin() as connection:
         user_id = users.get_id_from_username("Paul", connection)
@@ -171,3 +172,21 @@ def test_list_businesses(test_data):
             "name": "Fried and Loaded",
         }
     ] == result
+
+
+def test_update_followers(test_data):
+    users.update_followers("Alice", "Eve")
+    users.update_followers("Alice", "Bob")
+    users.update_followers("Bob", "Eve")
+
+    alice = users.get_user("Alice")
+    bob = users.get_user("Bob")
+    assert alice["num_followers"] == 2
+    assert bob["num_followers"] == 1
+
+
+def test_remove_followers(test_data):
+    users.update_followers("Alice", "Eve")
+    users.remove_follower("Alice", "Eve")
+    alice = users.get_user("Alice")
+    assert alice["num_followers"] == 0

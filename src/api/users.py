@@ -12,16 +12,12 @@ router = APIRouter(
 )
 
 
-class Users(BaseModel):
-    username: str
-
-
 @router.post("/create_account")
-def post_create_account(user_created: Users):
+def post_create_account(username: str):
     with db.engine.begin() as connection:
         new_id = connection.execute(
             sqlalchemy.text("INSERT INTO users (username) VALUES (:name) RETURNING id"),
-            {"name": user_created.username},
+            {"name": username},
         ).scalar_one()
 
         return new_id
@@ -40,18 +36,28 @@ def get_id_from_username(username, connection):
     ).scalar()
 
 
+@router.get("/{username}")
+def get_user(username: str):
+    with db.engine.begin() as connection:
+        query = sqlalchemy.text(
+            "SELECT id, username, num_followers FROM users where username = :username"
+        )
+        result = connection.execute(query, {"username": username}).one()
+        return result._asdict()
+
+
 @router.post("/add_follower")
-def update_followers(user_to_update: Users, follower_to_add: Users):
+def update_followers(user_to_update: str, follower_to_add: str):
     with db.engine.begin() as connection:
         # Get the user to update id
-        user_update_id = get_id_from_username(user_to_update.username, connection)
-        follower_to_add_id = get_id_from_username(follower_to_add.username, connection)
+        user_update_id = get_id_from_username(user_to_update, connection)
+        follower_to_add_id = get_id_from_username(follower_to_add, connection)
 
         # First add new follower to followers table
         connection.execute(
             sqlalchemy.text(
                 """
-                INSERT INTO followers (id, follower_id)
+                INSERT INTO followers (user_id, follower_id)
                 VALUES (:id, :follower_id)
                 """
             ),
@@ -62,7 +68,7 @@ def update_followers(user_to_update: Users, follower_to_add: Users):
         connection.execute(
             sqlalchemy.text(
                 """
-                UPDATE user_test 
+                UPDATE users 
                 SET num_followers = num_followers + 1
                 WHERE id = :id
                 """
@@ -74,19 +80,17 @@ def update_followers(user_to_update: Users, follower_to_add: Users):
 
 
 @router.post("/remove_follower")
-def remove_follower(user_to_update: Users, follower_to_remove: Users):
+def remove_follower(user_to_update: str, follower_to_remove: str):
     with db.engine.begin() as connection:
-        follower_to_remove_id = get_id_from_username(
-            follower_to_remove.username, connection
-        )
-        user_to_update_id = get_id_from_username(user_to_update.username, connection)
+        follower_to_remove_id = get_id_from_username(follower_to_remove, connection)
+        user_to_update_id = get_id_from_username(user_to_update, connection)
 
         # Find them in followers table and remove
         connection.execute(
             sqlalchemy.text(
                 """
                 DELETE FROM followers
-                WHERE (id = :user_to_update_id) and (follower_id = :remove_id)
+                WHERE (user_id = :user_to_update_id) and (follower_id = :remove_id)
                 """
             ),
             {
@@ -99,7 +103,7 @@ def remove_follower(user_to_update: Users, follower_to_remove: Users):
         connection.execute(
             sqlalchemy.text(
                 """
-                UPDATE user_test
+                UPDATE users
                 SET num_followers = num_followers - 1
                 WHERE id = :user_to_update_id
                 """

@@ -71,6 +71,7 @@ def update_followers(user_to_update: str, follower_to_add: str):
     return "OK"
 
 
+@db.handle_errors
 @router.post("/remove_follower")
 def remove_follower(user_to_update: str, follower_to_remove: str):
     with db.engine.begin() as connection:

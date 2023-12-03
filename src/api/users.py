@@ -14,6 +14,7 @@ router = APIRouter(
 )
 
 
+@db.handle_errors
 @router.post("/create_account")
 def post_create_account(username: str):
     with db.engine.begin() as connection:
@@ -25,6 +26,7 @@ def post_create_account(username: str):
         return new_id
 
 
+@db.handle_errors
 @router.get("/{username}")
 def get_user(username: str):
     with db.engine.begin() as connection:

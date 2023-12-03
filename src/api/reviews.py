@@ -22,6 +22,7 @@ class Reviews(BaseModel):
     difficulty: int  # on a scale of 1-5
 
 
+@db.handle_errors
 @router.post("/add")
 def post_add_review(review_to_add: Reviews):
     with db.engine.begin() as connection:

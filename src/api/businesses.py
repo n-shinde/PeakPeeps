@@ -17,6 +17,7 @@ class Business(BaseModel):
     address: str
 
 
+@db.handle_errors
 @router.put("/add")
 def add_business(request: Business):
     with db.engine.begin() as connection:
@@ -36,6 +37,7 @@ class ListBusinessesRequest(BaseModel):
     should_have_valid_coupon: bool
 
 
+@db.handle_errors
 @router.get("/list")
 def list_businesses(request: ListBusinessesRequest):
     with db.engine.begin() as connection:

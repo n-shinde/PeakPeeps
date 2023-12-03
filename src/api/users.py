@@ -1,4 +1,5 @@
 import sqlalchemy
+import sqlalchemy.exc
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from src.api import auth
@@ -24,16 +25,19 @@ def post_create_account(username: str):
 
 
 def get_id_from_username(username, connection):
-    return connection.execute(
-        sqlalchemy.text(
-            """
-                SELECT id
-                FROM users
-                WHERE username = :name
+    try:
+        return connection.execute(
+            sqlalchemy.text(
                 """
-        ),
-        {"name": username},
-    ).scalar()
+                    SELECT id
+                    FROM users
+                    WHERE username = :name
+                    """
+            ),
+            {"name": username},
+        ).scalar_one()
+    except sqlalchemy.exc.NoResultFound:
+        return f"can't find user {username}"
 
 
 @router.get("/{username}")

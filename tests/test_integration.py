@@ -190,3 +190,9 @@ def test_remove_followers(test_data):
     users.remove_follower("Alice", "Eve")
     alice = users.get_user("Alice")
     assert alice["num_followers"] == 0
+
+
+def test_fail_user_lookup(test_data):
+    with db.engine.begin() as connection:
+        result = users.get_id_from_username("Alex", connection)
+        assert "can't find user Alex" == result

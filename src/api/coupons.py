@@ -54,7 +54,7 @@ def get_valid_coupons_from_business(business_id: int):
 
 
 class EditCouponRequest(BaseModel):
-    business_name: str
+    business_id: int
     coupon_name: str
     new_coupon_name: Optional[str]
     is_valid: Optional[str]
@@ -68,20 +68,17 @@ def edit_coupon(request: EditCouponRequest):
         query = """
             Select id, name, valid, price from coupons
                 WHERE name = :coupon_name
-                    AND exists
-                    (SELECT * FROM business
-                        WHERE business.id = coupons.business_id
-                        AND business.name = :business_name)
+                    AND id = :id
         """
         current_coupon = connection.execute(
             text(query),
             {
                 "coupon_name": request.coupon_name,
-                "business_name": request.business_name,
+                "id": request.business_id,
             },
         ).first()
         if not current_coupon:
-            return f"Could not find a coupon from business {request.business_name} for coupon {request.coupon_name}"
+            return f"Could not find a coupon from business id {request.business_id} for coupon {request.coupon_name}"
 
         id = current_coupon.id
 
@@ -100,7 +97,7 @@ def edit_coupon(request: EditCouponRequest):
 
 
 class GetCouponRequest(BaseModel):
-    business_name: str
+    business_id: int
     coupon_name: str
 
 
@@ -111,20 +108,17 @@ def get_coupon(request: GetCouponRequest):
         query = """
             Select id, name, valid, price from coupons
                 WHERE name = :coupon_name
-                    AND exists
-                    (SELECT * FROM business
-                        WHERE business.id = coupons.business_id
-                        AND business.name = :business_name)
+                    AND id = :id
         """
         coupon = connection.execute(
             text(query),
             {
                 "coupon_name": request.coupon_name,
-                "business_name": request.business_name,
+                "id": request.business_id,
             },
         ).first()
         if not coupon:
-            return f"Could not find a coupon from business {request.business_name} for coupon {request.coupon_name}"
+            return f"Could not find a coupon from business_id {request.business_id} for coupon {request.coupon_name}"
         return coupon
 
 
@@ -135,39 +129,42 @@ class CouponRequest(BaseModel):
 
 @router.post("/purchase")
 def post_buy_coupon(request: CouponRequest):
+    # wrapping function like this so we can test the body of it seperately
     coupon_id = request.coupon_id
     user_id = request.user_id
     with db.read_repeatable_engine.begin() as connection:
-        # checking if the coupon is valid
-        query = text("SELECT valid FROM coupons WHERE id = :coupon_id")
-        is_valid = connection.execute(
-            query, {"coupon_id": request.coupon_id}
-        ).scalar_one()
-        if not is_valid:
-            return "coupon not valid"
+        return buy_coupon(coupon_id, user_id, connection)
 
-        # checking if user can affording the transaction
-        query = text(
-            """
+
+def buy_coupon(coupon_id: int, user_id: int, connection):
+    # checking if the coupon is valid
+    query = text("SELECT valid FROM coupons WHERE id = :coupon_id")
+    is_valid = connection.execute(query, {"coupon_id": coupon_id}).scalar_one()
+    if not is_valid:
+        return "coupon not valid"
+
+    # checking if user can affording the transaction
+    query = text(
+        """
             SELECT (SELECT SUM(change) FROM user_peepcoin_ledger WHERE user_id = :user_id) >= price
                 FROM coupons WHERE id = :coupon_id
             """
-        )
-        can_afford = connection.execute(
-            query, {"user_id": user_id, "coupon_id": coupon_id}
-        ).scalar_one()
-        if not can_afford:
-            return "user can't afford coupon"
+    )
+    can_afford = connection.execute(
+        query, {"user_id": user_id, "coupon_id": coupon_id}
+    ).scalar_one()
+    if not can_afford:
+        return "user can't afford coupon"
 
-        # removing peepcoins from their account
-        query = text(
-            "INSERT INTO user_peepcoin_ledger (user_id, change) VALUES (:user_id, -1 * (SELECT price FROM coupons where id = :coupon_id))"
-        )
-        connection.execute(query, {"user_id": user_id, "coupon_id": coupon_id})
+    # removing peepcoins from their account
+    query = text(
+        "INSERT INTO user_peepcoin_ledger (user_id, change) VALUES (:user_id, -1 * (SELECT price FROM coupons where id = :coupon_id))"
+    )
+    connection.execute(query, {"user_id": user_id, "coupon_id": coupon_id})
 
-        # adding coupon to their account
-        query = text(
-            "INSERT INTO user_coupon_ledger (user_id, coupon_id, change) VALUES (:user_id, :coupon_id, 1)"
-        )
-        connection.execute(query, {"user_id": user_id, "coupon_id": coupon_id})
-        return "OK"
+    # adding coupon to their account
+    query = text(
+        "INSERT INTO user_coupon_ledger (user_id, coupon_id, change) VALUES (:user_id, :coupon_id, 1)"
+    )
+    connection.execute(query, {"user_id": user_id, "coupon_id": coupon_id})
+    return "OK"

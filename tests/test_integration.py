@@ -6,10 +6,12 @@ from fastapi.security.api_key import APIKeyHeader
 from fastapi import Security, Request
 import os
 import dotenv
+from src.api import businesses
 
 from src.api.admin import reset
 from src import database as db
 from sqlalchemy import text
+from src.api.businesses import list_businesses
 from src.api.server import app
 from src.api import users
 from src.api import routes
@@ -43,8 +45,13 @@ def test_data():
     with db.engine.begin() as connection:
         queries = []
         queries.append("INSERT INTO users (id, username) VALUES (1, 'Bob')")
+        queries.append("INSERT INTO users (id, username) VALUES (2, 'Alice')")
+        queries.append("INSERT INTO users (id, username) VALUES (3, 'Eve')")
         queries.append(
             "INSERT INTO business (id, name, address, commissions_rate) VALUES (1, 'Fried and Loaded', '13 Santa Rosa St, San Luis Obispo, CA 93405', 0.9)"
+        )
+        queries.append(
+            "INSERT INTO business (id, name, address, commissions_rate) VALUES (2, 'SQL Tea', '3845 S Higuera St Ste 100, San Luis Obispo, CA 93401', 0.95)"
         )
         queries.append(
             "INSERT INTO coupons (id, name, valid, business_id, price) VALUES (1, 'Half off Smashburger', True, 1, 25)"
@@ -52,14 +59,16 @@ def test_data():
         queries.append(
             "INSERT INTO coupons (id, name, valid, business_id, price) VALUES (2, 'BOGO Milk Shakes', False, 1, 10)"
         )
+        queries.append(
+            "INSERT INTO coupons (id, name, valid, business_id, price) VALUES (3, 'An Invalid coupon', False, 2, 5)"
+        )
         for query in queries:
             connection.execute(text(query))
 
 
 def test_add_user(test_data):
     # setting up
-    request = users.Users(username="Paul")
-    new_id = users.post_create_account(request)
+    new_id = users.post_create_account("Paul")
 
     with db.engine.begin() as connection:
         user_id = users.get_id_from_username("Paul", connection)
@@ -104,18 +113,13 @@ def test_buy_coupon(test_data):
             "INSERT INTO user_peepcoin_ledger (user_id, change) VALUES (1, 30)"
         )
         connection.execute(query)
-        connection.commit()
-
-    request = {"coupon_id": 1, "user_id": 1}
-    client.post("/peepcoins/purchase/coupon", json=request)
-
-    with db.engine.begin() as connection:
+        coupons.buy_coupon(1, 1, connection)
         query = "select sum(change) from user_coupon_ledger WHERE user_id = 1 and coupon_id = 1"
-        coupons = connection.execute(text(query)).scalar_one()
+        coupon_result = connection.execute(text(query)).scalar_one()
+        assert coupon_result == 1
 
         query = "select sum(change) from user_peepcoin_ledger where user_id = 1"
         balance = connection.execute(text(query)).scalar_one()
-        assert coupons == 1
         assert balance == 5
 
 
@@ -138,7 +142,7 @@ def test_buy_invalid_coupon(test_data):
 
 def test_edit_coupon(test_data):
     request = coupons.EditCouponRequest(
-        business_name="Fried and Loaded",
+        business_id=1,
         coupon_name="Half off Smashburger",
         price=50,
         new_coupon_name=None,
@@ -151,8 +155,44 @@ def test_edit_coupon(test_data):
 
 def test_get_coupon(test_data):
     request = coupons.GetCouponRequest(
-        business_name="Fried and Loaded", coupon_name="Half off Smashburger"
+        business_id=1, coupon_name="Half off Smashburger"
     )
     result = coupons.get_coupon(request)
     assert result.price == 25
     assert result.valid == True
+
+
+def test_list_businesses(test_data):
+    request = businesses.ListBusinessesRequest(should_have_valid_coupon=True)
+    result = list_businesses(request)
+    assert [
+        {
+            "address": "13 Santa Rosa St, San Luis Obispo, CA 93405",
+            "id": 1,
+            "name": "Fried and Loaded",
+        }
+    ] == result
+
+
+def test_update_followers(test_data):
+    users.update_followers("Alice", "Eve")
+    users.update_followers("Alice", "Bob")
+    users.update_followers("Bob", "Eve")
+
+    alice = users.get_user("Alice")
+    bob = users.get_user("Bob")
+    assert alice["num_followers"] == 2
+    assert bob["num_followers"] == 1
+
+
+def test_remove_followers(test_data):
+    users.update_followers("Alice", "Eve")
+    users.remove_follower("Alice", "Eve")
+    alice = users.get_user("Alice")
+    assert alice["num_followers"] == 0
+
+
+def test_fail_user_lookup(test_data):
+    with db.engine.begin() as connection:
+        result = users.get_id_from_username("Alex", connection)
+        assert "can't find user Alex" == result

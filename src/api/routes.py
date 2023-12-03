@@ -14,14 +14,17 @@ router = APIRouter(
     dependencies=[Depends(auth.get_api_key)],
 )
 
+
 class search_sort_options(str, Enum):
     route_name = "route_name"
     length_miles = "length_miles"
     city = "city"
 
+
 class search_sort_order(str, Enum):
     asc = "asc"
-    desc = "desc"   
+    desc = "desc"
+
 
 @router.get("/search/")
 def search_orders(
@@ -34,7 +37,7 @@ def search_orders(
     """
     Search for routes items by route_name and/or potion.
 
-    Route name and user sku filter to orders that contain the 
+    Route name and user sku filter to orders that contain the
     string (case insensitive). If the filters aren't provided, no
     filtering occurs on the respective search term.
 
@@ -50,7 +53,7 @@ def search_orders(
 
     The response itself contains a previous and next page token (if
     such pages exist) and the results as an array of line items. Each
-    line item contains the line item id (must be unique), item sku, 
+    line item contains the line item id (must be unique), item sku,
     customer name, line item total (in gold), and timestamp of the order.
     Your results must be paginated, the max results you can return at any
     time is 5 total line items.
@@ -60,7 +63,6 @@ def search_orders(
 
     sort_by_order = "desc"
 
-
     if sort_col == search_sort_options.length_miles:
         sort_by_col = "length_in_miles"
 
@@ -68,10 +70,7 @@ def search_orders(
         sort_by_col = "city"
 
     if sort_order == search_sort_order.asc:
-        sort_by_order = 'asc'
-
-
-
+        sort_by_order = "asc"
 
     page_size = 5
 
@@ -82,8 +81,6 @@ def search_orders(
 
     else:
         offset = int(search_page)
-
-
 
     # Not negative
     if offset - 5 >= 0:
@@ -108,7 +105,6 @@ def search_orders(
     len_of_data = result_len.scalar()
     print(len_of_data)
 
-
     query = f"""
                 SELECT
                 routes.name AS name,
@@ -130,12 +126,7 @@ def search_orders(
 
                 """
     with db.engine.begin() as connection:
-        result = connection.execute(
-            sqlalchemy.text(
-                query
-            )
-        )
-
+        result = connection.execute(sqlalchemy.text(query))
 
     # Fetch all rows from the result
     data = result.fetchall()
@@ -144,7 +135,6 @@ def search_orders(
     print(data)
     print(len(data))
 
-    
     # Not negative
     if offset + 5 > len(data):
         next_page = ""
@@ -152,9 +142,7 @@ def search_orders(
     else:
         next_page = str(offset + 5)
 
-
     for row in data:
-
         print(row.name)
         print(row.length_miles)
         print(row.city)
@@ -162,20 +150,14 @@ def search_orders(
 
         lst.append(
             {
-                    "route_name": row.name,
-                    "length_miles": row.length_miles,
-                    "city": row.city,
-                    "user": row.user,
+                "route_name": row.name,
+                "length_miles": row.length_miles,
+                "city": row.city,
+                "user": row.user,
             }
         )
 
-    return {
-        "previous": prev_page,
-        "next": next_page,
-        "results": lst
-    }
-
-
+    return {"previous": prev_page, "next": next_page, "results": lst}
 
 
 def get_id_from_route_name(route_name, connection):
@@ -306,7 +288,7 @@ def report_route(route_name: str):
 
 
 @router.post("/complete")
-def complete_route(route_name: str,username: str):
+def complete_route(route_name: str, username: str):
     with db.engine.begin() as connection:
         connection.execute(
             sqlalchemy.text(
@@ -318,10 +300,9 @@ def complete_route(route_name: str,username: str):
             ),
             {"name": route_name},
         )
-	    
-	user_id = get_id_from_username(username, connection)
-	PEEP_COINS_FROM_COMPLETING_ROUTE = 15
-        add_peepcoins(user_id, PEEP_COINS_FROM_COMPLETING_ROUTE, connection)
-    
-    return {"OK"}
 
+        user_id = get_id_from_username(username, connection)
+        PEEP_COINS_FROM_COMPLETING_ROUTE = 15
+        add_peepcoins(user_id, PEEP_COINS_FROM_COMPLETING_ROUTE, connection)
+
+        return {"OK"}

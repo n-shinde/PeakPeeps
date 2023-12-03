@@ -39,5 +39,3 @@ def put_add_peepcoins(request: PeepCoinRequest):
     with db.engine.begin() as connection:
         add_peepcoins(request.user_id, request.change, connection)
     return "OK"
-
-

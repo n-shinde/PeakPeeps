@@ -268,6 +268,7 @@ def get_followers_routes(friend_username: str):
     return route_list
 
 
+@db.handle_errors
 @router.post("/report")
 def report_route(route_name: str):
     with db.engine.begin() as connection:
@@ -279,7 +280,7 @@ def report_route(route_name: str):
                 WHERE routes.name = :name
                 """
             ),
-            {"location": route_name},
+            {"name": route_name},
         )
 
     status = "Reported"

@@ -4,6 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from src.api import auth
 from src import database as db
+from src.database import handle_errors, get_id_from_username
 from src.api.peepcoins import add_peepcoins_query
 
 router = APIRouter(
@@ -24,22 +25,6 @@ def post_create_account(username: str):
         return new_id
 
 
-def get_id_from_username(username, connection):
-    try:
-        return connection.execute(
-            sqlalchemy.text(
-                """
-                    SELECT id
-                    FROM users
-                    WHERE username = :name
-                    """
-            ),
-            {"name": username},
-        ).scalar_one()
-    except sqlalchemy.exc.NoResultFound:
-        return f"can't find user {username}"
-
-
 @router.get("/{username}")
 def get_user(username: str):
     with db.engine.begin() as connection:
@@ -50,6 +35,7 @@ def get_user(username: str):
         return result._asdict()
 
 
+@handle_errors
 @router.post("/add_follower")
 def update_followers(user_to_update: str, follower_to_add: str):
     with db.engine.begin() as connection:

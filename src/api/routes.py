@@ -98,7 +98,7 @@ def search_orders(
                 FROM
                 routes
                 JOIN users ON 
-                    users.id = routes.added_by_user_id
+                users.id = routes.added_by_user_id
                 """
             )
         )
@@ -189,18 +189,34 @@ class Route(BaseModel):
 @router.post("/add")
 def post_add_route(route_to_add: Route):
     with db.engine.begin() as connection:
-        user_id = get_id_from_username(route_to_add.username, connection)
+	user_id = get_id_from_username(route_to_add.username, connection)
+
+	result = connection.execute(
+            sqlalchemy.text(
+                """
+                SELECT 1
+                FROM routes
+                WHERE user_id = :user_id
+		AND routes.name ILIKE '%{route_name}%'
+                """
+              ),
+            {"route_name": route_to_add.name,"user_id": user_id}
+        )
+
+        if result.fetchone():
+            return "User has already submitted this route"
+	
+	    
         new_id = connection.execute(
             sqlalchemy.text(
                 """
-				INSERT INTO routes (name, added_by_user_id, address, 
-				city, state, length_in_miles, coordinates)
-				VALUES (:name, :added_by_user_id, :address, :city,
-				:state, :length, :coordinates)
+		INSERT INTO routes (name, added_by_user_id, address, 
+		city, state, length_in_miles, coordinates)
+		VALUES (:name, :added_by_user_id, :address, :city,
+		:state, :length, :coordinates)
                 RETURNING id
-				"""
+		"""
             ),
-            [
                 {
                     "name": route_to_add.name,
                     "added_by_user_id": user_id,
@@ -209,8 +225,7 @@ def post_add_route(route_to_add: Route):
                     "coordinates": route_to_add.coordinates,
                     "state": route_to_add.state,
                     "city": route_to_add.city,
-                }
-            ],
+                },
         ).scalar_one()
 
         PEEP_COINS_FROM_ADDING_ROUTE = 10
@@ -247,7 +262,7 @@ def get_popular_routes():
 @router.get("/followers")
 def get_followers_routes(friend_username: str, username: str):
     with db.engine.begin() as connection:
-        friend_id = get_id_from_username(friend_username, connection)
+	friend_id = get_id_from_username(friend_username, connection)
 	user_id = get_id_from_username(username, connection)
 
 	friend_check = connection.execute(

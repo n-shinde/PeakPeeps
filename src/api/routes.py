@@ -225,10 +225,13 @@ def get_popular_routes():
         popular_routes = connection.execute(
             sqlalchemy.text(
                 """
-		SELECT name, date_added, location, length_in_miles,difficulty, activities, coords
+		SELECT name, date_added, location, length_in_miles,difficulty, activities, coords, AVG(review.rating) AS Rating
 		FROM route
 		JOIN review ON route.id = review.route_id
-		WHERE review.rating >= 4
+  		GROUP BY name
+		HAVING Rating >= 4 AND COUNT(review.rating) > 5
+  		ORDER BY Rating DESC
+  		
 		"""
             )
         ).scalars()

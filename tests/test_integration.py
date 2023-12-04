@@ -80,7 +80,7 @@ def test_add_user(test_data):
     new_id = users.post_create_account("Paul")
 
     with db.engine.begin() as connection:
-        user_id = users.get_id_from_username("Paul", connection)
+        user_id = db.handle_errors(users.get_id_from_username)("Paul", connection)
         assert new_id == user_id
 
 

@@ -52,7 +52,7 @@ def get_id_from_username(username, connection):
 def handle_errors(func):
     def wrapper(*args, **kwargs):
         try:
-            func(*args, **kwargs)
+            return func(*args, **kwargs)
         except FailedLookup as e:
             return e.message
         except sqlalchemy.exc.NoResultFound as e:

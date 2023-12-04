@@ -262,7 +262,7 @@ def get_followers_routes(friend_username: str, username: str):
 	{"follower_id":friend_id,"user_id":user_id}
 	)
 	if not friend_check.fetchone():
-		"User isn't friends with other user, cannot retrieve routes."
+		return "User isn't friends with other user, cannot retrieve routes."
 	    
         friends = connection.execute(
             sqlalchemy.text(
@@ -310,7 +310,10 @@ def report_route(route_name: str):
 @router.post("/complete")
 def complete_route(route_name: str, username: str):
     with db.engine.begin() as connection:
-        connection.execute(
+        user_id = get_id_from_username(username, connection)
+	route_id = get_id_from_route_name(route_name, connection)
+	    
+	connection.execute(
             sqlalchemy.text(
                 """
                 UPDATE routes
@@ -321,7 +324,29 @@ def complete_route(route_name: str, username: str):
             {"name": route_name},
         )
 
-        user_id = get_id_from_username(username, connection)
+	completed_check = connection.execute(
+            sqlalchemy.text(
+		"""
+	    	SELECT user_id,route_id
+		FROM completed_route_ledger
+		WHERE user_id = :user_id AND route_id = :route_id
+  		"""
+	    ),
+	{"user_id":user_id,"route_id":route_id}
+	)
+	if completed_check.fetchone():
+		return "User has already completed this route"
+	
+	connection.execute(
+            sqlalchemy.text(
+                """
+                INSERT INTO completed_route_ledger (user_id, route_id)
+                VALUES (:user_id,:route_id)
+                """
+            ),
+            {"user_id": user_id,"route_id":route_id},
+        )
+	
         PEEP_COINS_FROM_COMPLETING_ROUTE = 15
         add_peepcoins(user_id, PEEP_COINS_FROM_COMPLETING_ROUTE, connection)
 

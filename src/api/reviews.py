@@ -25,6 +25,14 @@ class Reviews(BaseModel):
 @db.handle_errors
 @router.post("/add")
 def post_add_review(review_to_add: Reviews):
+	"""
+	review_to_add: a Reviews class object
+
+ 	This endpoint adds a review to a certain route, given the route_name and username. 
+  	A user can only add one review to each route (to prohibit spamming of reviews for peepcoins).
+   	If a review has already been submitted by the user, and error message is returned.
+ 	"""
+	
     with db.engine.begin() as connection:
         user_id = get_id_from_username(review_to_add.username, connection)
         route_id = get_id_from_route_name(review_to_add.route_name, connection)

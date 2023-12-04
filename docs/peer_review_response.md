@@ -15,4 +15,19 @@
 13. Fixed coupon logic to accurately assess validity of coupons, and added ability for businesses to edit their coupons.
 14. Added condition to check if a review has already been posted for a route by the same user - not perfect logic but keeps someone from spamming the same review to one route for peepcoins.
 15. Fixed get friends routes to only return a limit of 10. Added a check to make sure you are friends with a user before you can see their routes (i.e. you both follow each other).
+16. Made route names unique, and added a check for similar route names by the same user to eliminate spamming of adding the same route.
+17. Added completed_route_ledger to keep track of who completed what route. Allows us to check things like if a user has done a route before posting a review.
+18. Added completed route endpoint to give you peepcoins and see what routes you have finished. Only lets you complete each route once. (Ideally we’d have a gps track to determine if you actually completed the route, but for now this logic prevents spamming of completing a route)
+19. Added update review endpoint to allow a user to edit their review. Not adding a delete review endpoint as it may get complicated with peepcoins.
+20. Added a user peepcoin endpoint to return a users total peepcoins
+21. Fixed formatting to have consistent indenting and SQL query style
+22. Made sure a follower is actually following the user before removing them
 
+# API Spec/Schema Feedback
+
+1. Updated schema.sql to match our updated tables in the database
+2. Made foreign key reference for user_id in followers, routes, and the ledgers
+3. Made naming conventions consistent (such as usernames, followers, etc.)
+4. Updated api spec to match our current endpoints
+5. Fixed redundancy in the reviews table with users
+6. Not splitting routes table, would just create unnecessary redundancy and harm readability

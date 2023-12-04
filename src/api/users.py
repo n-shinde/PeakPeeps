@@ -62,14 +62,52 @@ def update_followers(user_to_update: str, follower_to_add: str):
                 """
                 UPDATE users 
                 SET num_followers = num_followers + 1
-                WHERE id = :id
+                WHERE id = :follower_id
                 """
             ),
-            {"id": user_update_id},
+            {"follower_id": follower_id},
         )
 
     return "OK"
 
+
+@db.handle_errors
+@router.get("/get_friends")
+def get_friends(username:str):
+    with db.engine.begin() as connection:
+        user_id = get_id_from_username(username, connection)
+        
+        get_following = connection.execute(
+                sqlalchemy.text(
+        		"""
+        	    SELECT follower_id
+        		FROM followers
+        		WHERE user_id = :user_id
+          		"""
+        	    ),
+        	{"user_id":user_id}
+        	).scalars()
+
+        friends = []
+        for item in get_following:
+            get_friend = connection.execute(
+                    sqlalchemy.text(
+            		"""
+            	    SELECT username
+            		FROM users
+                    JOIN followers ON users.user_id = followers.follower_id
+            		WHERE follower_id = :user_id AND user_id = :follower_id
+              		"""
+            	    ),
+            	{"follower_id":item.follower_id,"user_id":user_id}
+            	).scalars()
+            
+            if get_friend.fetchone():
+            	friends.append(get_friend.first())
+
+    return friends
+        
+        
 
 @db.handle_errors
 @router.post("/remove_follower")

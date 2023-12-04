@@ -16,7 +16,8 @@
 14. Added condition to check if a review has already been posted for a route by the same user - not perfect logic but keeps someone from spamming the same review to one route for peepcoins.
 15. Fixed get friends routes to only return a limit of 10. Added a check to make sure you are friends with a user before you can see their routes (i.e. you both follow each other).
 16. Made route names unique, and added a check for similar route names by the same user to eliminate spamming of adding the same route.
-17. 
+17. Added completed_route_ledger to keep track of who completed what route. Allows us to check things like if a user has done a route before posting a review.
+18. Added completed route endpoint to give you peepcoins and see what routes you have finished. Only lets you complete each route once. (Ideally we’d have a gps track to determine if you actually completed the route, but for now this logic prevents spamming of completing a route)
 
 # API Spec/Schema Feedback
 

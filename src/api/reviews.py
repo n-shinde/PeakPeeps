@@ -29,6 +29,20 @@ def post_add_review(review_to_add: Reviews):
         user_id = get_id_from_username(review_to_add.username, connection)
         route_id = get_id_from_route_name(review_to_add.route_name, connection)
 
+        completed_check = connection.execute(
+            sqlalchemy.text(
+    		"""
+    	    SELECT user_id,route_id
+    		FROM completed_route_ledger
+    		WHERE user_id = :user_id AND route_id = :route_id
+      		"""
+	    ),
+    	{"user_id":user_id,"route_id":route_id}
+    	)
+        
+    	if not completed_check.fetchone():
+    		return "User has not completed this route, cannot submit review."
+            
         result = connection.execute(
             sqlalchemy.text(
                 """
@@ -37,12 +51,13 @@ def post_add_review(review_to_add: Reviews):
                 WHERE user_id = :user_id AND route_id = :route_id
                 """
               ),
-            {"user_id":user_id,"route_id":route_id,"exists":exists}
+            {"user_id":user_id,"route_id":route_id}
         )
 
         if result.fetchone():
-            return "User has already submitted a review for this route"
+            return "User has already submitted a review for this route."
 
+        
         
         review_id = connection.execute(
             sqlalchemy.text(

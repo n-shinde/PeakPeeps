@@ -28,7 +28,7 @@ class search_sort_order(str, Enum):
 
 @db.handle_errors
 @router.get("/search/")
-def search_orders(
+def search_routes(
     route_name: str = "",
     user_added: str = "",
     search_page: str = "",
@@ -36,7 +36,7 @@ def search_orders(
     sort_order: search_sort_order = search_sort_order.desc,
 ):
     """
-    Search for routes items by route_name and/or potion.
+    Search for routes items by route_name.
 
     Route name and user sku filter to orders that contain the
     string (case insensitive). If the filters aren't provided, no
@@ -262,10 +262,10 @@ def get_popular_routes():
 @router.get("/followers")
 def get_followers_routes(friend_username: str, username: str):
     with db.engine.begin() as connection:
-	friend_id = get_id_from_username(friend_username, connection)
-	user_id = get_id_from_username(username, connection)
+        friend_id = get_id_from_username(friend_username, connection)
+        user_id = get_id_from_username(username, connection)
 
-	friend_check = connection.execute(
+        friend_check = connection.execute(
             sqlalchemy.text(
 		"""
 	    	SELECT A.follower_id AS user1, A.user_id AS user2
@@ -274,31 +274,32 @@ def get_followers_routes(friend_username: str, username: str):
 		WHERE A.follower_id = :follower_id AND A.user_id = :user_id
   		"""
 	    ),
-	{"follower_id":friend_id,"user_id":user_id}
-	)
-	if not friend_check.fetchone():
-		"User isn't friends with other user, cannot retrieve routes."
-	    
+        {"follower_id":friend_id,"user_id":user_id}
+        )
+
+        if not friend_check.fetchone():
+            return "User isn't friends with other user, cannot retrieve routes."
+            
         friends = connection.execute(
             sqlalchemy.text(
                 """
-		SELECT name, date_added, location, length_in_miles,difficulty, activities, coords, AVG(review.rating) AS Rating
-		FROM route
-		WHERE user_id = :friend_id
-    		GROUP BY name
-		HAVING Rating >= 4 AND COUNT(review.rating) > 5
-  		ORDER BY Rating DESC
-		LIMIT 10
-		"""
+        SELECT name, address, length_in_miles , coordinates, AVG(review.rating) AS Rating
+        FROM routes
+        WHERE user_id = :friend_id
+            GROUP BY name
+        HAVING Rating >= 4 AND COUNT(review.rating) > 5
+        ORDER BY Rating DESC
+        LIMIT 10
+        """
             ),
             {"friend_id": friend_id},
         ).scalars()
 
-    route_list = []
-    for item in friends:
-        route_list.append(item)
+        route_list = []
+        for item in friends:
+            route_list.append(item)
 
-    return route_list
+        return route_list
 
 
 @db.handle_errors
@@ -325,7 +326,10 @@ def report_route(route_name: str):
 @router.post("/complete")
 def complete_route(route_name: str, username: str):
     with db.engine.begin() as connection:
-        connection.execute(
+        user_id = get_id_from_username(username, connection)
+	route_id = get_id_from_route_name(route_name, connection)
+	    
+	connection.execute(
             sqlalchemy.text(
                 """
                 UPDATE routes
@@ -336,7 +340,29 @@ def complete_route(route_name: str, username: str):
             {"name": route_name},
         )
 
-        user_id = get_id_from_username(username, connection)
+	completed_check = connection.execute(
+            sqlalchemy.text(
+		"""
+	    	SELECT user_id,route_id
+		FROM completed_route_ledger
+		WHERE user_id = :user_id AND route_id = :route_id
+  		"""
+	    ),
+	{"user_id":user_id,"route_id":route_id}
+	)
+	if completed_check.fetchone():
+		return "User has already completed this route"
+	
+	connection.execute(
+            sqlalchemy.text(
+                """
+                INSERT INTO completed_route_ledger (user_id, route_id)
+                VALUES (:user_id,:route_id)
+                """
+            ),
+            {"user_id": user_id,"route_id":route_id},
+        )
+	
         PEEP_COINS_FROM_COMPLETING_ROUTE = 15
         add_peepcoins(user_id, PEEP_COINS_FROM_COMPLETING_ROUTE, connection)
 

@@ -16,7 +16,7 @@ router = APIRouter(
 
 class Reviews(BaseModel):
     username: str
-    route_name: int
+    route_name: str
     description: str
     rating: int  # On a scale of 1 - 5 (only ints)
     difficulty: int  # on a scale of 1-5
@@ -29,7 +29,22 @@ def post_add_review(review_to_add: Reviews):
         user_id = get_id_from_username(review_to_add.username, connection)
         route_id = get_id_from_route_name(review_to_add.route_name, connection)
 
-        connection.execute(
+        result = connection.execute(
+            sqlalchemy.text(
+                """
+                SELECT 1
+                FROM review
+                WHERE user_id = :user_id AND route_id = :route_id
+                """
+              ),
+            {"user_id":user_id,"route_id":route_id,"exists":exists}
+        )
+
+        if result.fetchone():
+            return "User has already submitted a review for this route"
+
+        
+        review_id = connection.execute(
             sqlalchemy.text(
                 """
                 INSERT INTO review (route_id, user_id, description, rating, difficulty)
@@ -49,4 +64,6 @@ def post_add_review(review_to_add: Reviews):
 
         PEEP_COINS_FROM_POSTING_REVIEW = 5
         add_peepcoins(user_id, PEEP_COINS_FROM_POSTING_REVIEW, connection)
-    return "OK"
+        
+    return f"Review ID: {review_id}"
+

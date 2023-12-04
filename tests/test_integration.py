@@ -64,7 +64,22 @@ def test_data():
             "INSERT INTO coupons (id, name, valid, business_id, price) VALUES (3, 'An Invalid coupon', False, 2, 5)"
         )
         queries.append(
-            "INSERT INTO routes (id, name, address, city, state, length_in_miles, added_by_user_id, coordinates, reported) VALUES (1, 'Bishop Peak', 'Patricia Drive', 'San Luis Obispo', 'CA', 3.7, 1, ARRAY[35.30327857570746, -120.69743771424115], FALSE)"
+            """INSERT INTO routes (id, name, address, city, state, length_in_miles, added_by_user_id, coordinates, reported)
+            VALUES (1, 'Bishop Peak', 'Patricia Drive', 'San Luis Obispo', 'CA', 3.7, 1, ARRAY[35.30327857570746, -120.69743771424115], FALSE)"""
+        )
+        queries.append(
+            """INSERT INTO routes (id, name, address, city, state, length_in_miles, added_by_user_id, coordinates, reported)
+            VALUES (2, 'Resevoir Canyon Loop', 'Resevoir canyon natural reserve', 'San Luis Obispo', 'CA', 5.5, 2, ARRAY[35.30327857570746, -120.69743771424115], FALSE)"""
+        )
+        queries.append(
+            """INSERT INTO routes (id, name, address, city, state, length_in_miles, added_by_user_id, coordinates, reported)
+            VALUES (3, 'Lemon Grove and rock garden loop', 'Lemon GRove', 'San Luis Obispo', 'CA', 4.1, 3, ARRAY[35.30327857570746, -120.69743771424115], FALSE),
+            (4, 'Felsman Loop', 'Ferrini Ranch', 'San Luis Obispo', 'CA', 4.1, 3, ARRAY[35.30327857570746, -120.69743771424115], FALSE),
+            (5, 'Poly Canyon', 'Peterson Ranch', 'San Luis Obispo', 'CA', 4.6, 1, ARRAY[35.30327857570746, -120.69743771424115], FALSE),
+            (6, 'Froom Canyon', 'Irish Hills', 'San Luis Obispo', 'CA', 3.8, 3, ARRAY[35.30327857570746, -120.69743771424115], FALSE),
+            (7, 'M Trail', 'Cerro San Luis', 'San Luis Obispo', 'CA', 2.5, 3, ARRAY[35.30327857570746, -120.69743771424115], FALSE),
+            (8, 'Johnson Ranch Loop', 'Johnson Ranch', 'San Luis Obispo', 'CA', 4.1, 3, ARRAY[35.30327857570746, -120.69743771424115], FALSE)
+            """
         )
         for query in queries:
             connection.execute(text(query))
@@ -75,7 +90,7 @@ def test_add_user(test_data):
     new_id = users.post_create_account("Paul")
 
     with db.engine.begin() as connection:
-        user_id = users.get_id_from_username("Paul", connection)
+        user_id = db.handle_errors(users.get_id_from_username)("Paul", connection)
         assert new_id == user_id
 
 
@@ -219,3 +234,47 @@ def test_report_route_nonexistant(test_data):
     assert result == "Can't find 'I don't exist'"
     # doesn't have to be this result exactlty,
     # but we should have some error message that the lookup failed
+
+
+def test_search_route_name(test_data):
+    result = routes.search_routes(route_name="Peak")
+    assert {
+        "next": "",
+        "previous": "",
+        "results": [
+            {
+                "city": "San Luis Obispo",
+                "length_miles": 3.7,
+                "route_name": "Bishop Peak",
+                "user": 1,
+            }
+        ],
+    } == result
+
+
+def test_search_route_user(test_data):
+    result = routes.search_routes(user_added="Bob")
+    assert {
+        "next": "",
+        "previous": "",
+        "results": [
+            {
+                "city": "San Luis Obispo",
+                "length_miles": 3.7,
+                "route_name": "Bishop Peak",
+                "user": 1,
+            }
+        ],
+    } == result
+
+
+def test_search_routes_multiple_pages(test_data):
+    result = routes.search_routes(search_page=1)
+    assert len(result) == 5
+    assert result == "foo"
+
+
+def test_get_followers_routes(test_data):
+    users.update_followers("Eve", "Bob")
+    result = routes.get_followers_routes("Bob", "Eve")
+    assert result == "foo"

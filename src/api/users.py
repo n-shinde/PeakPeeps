@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from src.api import auth
 from src import database as db
-from src.database import handle_errors, get_id_from_username
+from src.database import get_id_from_username
 from src.api.peepcoins import add_peepcoins_query
 
 router = APIRouter(
@@ -37,7 +37,7 @@ def get_user(username: str):
         return result._asdict()
 
 
-@handle_errors
+@db.handle_errors
 @router.post("/add_follower")
 def update_followers(user_to_update: str, follower_to_add: str):
     with db.engine.begin() as connection:

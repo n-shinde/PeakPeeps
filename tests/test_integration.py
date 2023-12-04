@@ -64,7 +64,12 @@ def test_data():
             "INSERT INTO coupons (id, name, valid, business_id, price) VALUES (3, 'An Invalid coupon', False, 2, 5)"
         )
         queries.append(
-            "INSERT INTO routes (id, name, address, city, state, length_in_miles, added_by_user_id, coordinates, reported) VALUES (1, 'Bishop Peak', 'Patricia Drive', 'San Luis Obispo', 'CA', 3.7, 1, ARRAY[35.30327857570746, -120.69743771424115], FALSE)"
+            """INSERT INTO routes (id, name, address, city, state, length_in_miles, added_by_user_id, coordinates, reported)
+            VALUES (1, 'Bishop Peak', 'Patricia Drive', 'San Luis Obispo', 'CA', 3.7, 1, ARRAY[35.30327857570746, -120.69743771424115], FALSE)"""
+        )
+        queries.append(
+            """INSERT INTO routes (id, name, address, city, state, length_in_miles, added_by_user_id, coordinates, reported)
+            VALUES (2, 'Resevoir Canyon Loop', 'Resevoir canyon natural reserve', 'San Luis Obispo', 'CA', 5.5, 1, ARRAY[35.30327857570746, -120.69743771424115], FALSE)"""
         )
         for query in queries:
             connection.execute(text(query))

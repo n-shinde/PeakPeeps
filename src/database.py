@@ -47,7 +47,7 @@ def get_id_from_username(username, connection):
 
 # Doing some magic with decorators. Check out this 60-second video look behind the curtain
 # https://www.youtube.com/watch?v=BE-L7xu8pO4
-# But basically, if we decorate our functions with this, we can do all the error handling here,
+# But basically, if we decorate our functions with this, we can do all the general error handling here,
 # So we don't have to do it to every function individually
 def handle_errors(func):
     def wrapper(*args, **kwargs):

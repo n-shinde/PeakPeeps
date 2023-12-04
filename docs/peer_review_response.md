@@ -13,3 +13,6 @@
 11. Made “get_user_id_from_username” and “get_route_id_from_name” functions as we make these calls frequently
 12. Fixed query parameters to just be in a dictionary, not also a list
 13. Fixed coupon logic to accurately assess validity of coupons, and added ability for businesses to edit their coupons.
+14. Added condition to check if a review has already been posted for a route by the same user - not perfect logic but keeps someone from spamming the same review to one route for peepcoins.
+15. Fixed get friends routes to only return a limit of 10. Added a check to make sure you are friends with a user before you can see their routes (i.e. you both follow each other).
+

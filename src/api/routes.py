@@ -236,6 +236,10 @@ def post_add_route(route_to_add: Route):
 @db.handle_errors
 @router.get("/popular")
 def get_popular_routes():
+	"""
+	This endpoint returns the top 10 most popular routes, determined by rating and requiring the 
+ 	route to have more than 5 reviews.
+ 	"""
     with db.engine.begin() as connection:
         popular_routes = connection.execute(
             sqlalchemy.text(
@@ -261,6 +265,15 @@ def get_popular_routes():
 @db.handle_errors
 @router.get("/followers")
 def get_followers_routes(friend_username: str, username: str):
+	"""
+	friend_username: friend the user wants to view routes of
+ 	username: the user making the request
+
+  	This endpoint returns a friends routes. The logic assumes that a friend is when both users
+   	follow each other. Since we don't have accept follow request functionality, this is
+    	the next best thing. If users aren't friends, an error message is returned.
+ 	"""
+	
     with db.engine.begin() as connection:
         friend_id = get_id_from_username(friend_username, connection)
         user_id = get_id_from_username(username, connection)
@@ -303,28 +316,17 @@ def get_followers_routes(friend_username: str, username: str):
 
 
 @db.handle_errors
-@router.post("/report")
-def report_route(route_name: str):
-    with db.engine.begin() as connection:
-        connection.execute(
-            sqlalchemy.text(
-                """
-                UPDATE routes
-                SET reported = True
-                WHERE routes.name = :name
-                """
-            ),
-            {"name": route_name},
-        )
-
-    status = "Reported"
-    success = True
-    return {"report_status": status, "flagged": success}
-
-
-@db.handle_errors
 @router.post("/complete")
 def complete_route(route_name: str, username: str):
+	"""
+	route_name: name of the route that was completed
+ 	username: name of the user that completed the route
+
+  	This endpoint serves to log when a user completes a route, giving them peepcoins. A user can 
+   	only complete a route once, to avoid spamming for peepcoins (the logic isn't perfect, but it
+    	will do for our resources). If a user has already completed this route, an error message is returned.
+  	"""
+	
     with db.engine.begin() as connection:
         user_id = get_id_from_username(username, connection)
 	route_id = get_id_from_route_name(route_name, connection)

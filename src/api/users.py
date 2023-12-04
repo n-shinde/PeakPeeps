@@ -40,6 +40,12 @@ def get_user(username: str):
 @db.handle_errors
 @router.post("/add_follower")
 def update_followers(user_to_update: str, follower_to_add: str):
+    """
+    user_to_update: the user making the request
+    follower_to_add: the person that the user wants to follow
+
+    This endpoint adds the user and the follower to the followers table.
+    """
     with db.engine.begin() as connection:
         # Get the user to update id
         user_update_id = get_id_from_username(user_to_update, connection)
@@ -74,6 +80,10 @@ def update_followers(user_to_update: str, follower_to_add: str):
 @db.handle_errors
 @router.get("/get_friends")
 def get_friends(username:str):
+    """
+    This endpoint returns all of the friends of a certain user. The qualifications of a "friend" means that 
+    both users follow each other. There will be two rows in the follower table to represent this relationship.
+    """
     with db.engine.begin() as connection:
         user_id = get_id_from_username(username, connection)
         

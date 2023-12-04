@@ -22,7 +22,7 @@ class Business(BaseModel):
 def add_business(request: Business):
     with db.engine.begin() as connection:
         connection.execute(
-            sqlalchemy.text(
+            text(
                 """
                 INSERT INTO business (name, address)
                 VALUES (:name, :address)

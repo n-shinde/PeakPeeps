@@ -26,4 +26,4 @@
 3. Made naming conventions consistent (such as usernames, followers, etc.)
 4. Updated api spec to match our current endpoints
 5. Fixed redundancy in the reviews table with users
-6. 
+6. Not splitting routes table, would just create unnecessary redundancy and harm readability

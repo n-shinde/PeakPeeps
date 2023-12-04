@@ -28,7 +28,7 @@ class search_sort_order(str, Enum):
 
 @db.handle_errors
 @router.get("/search/")
-def search_orders(
+def search_routes(
     route_name: str = "",
     user_added: str = "",
     search_page: str = "",
@@ -36,7 +36,7 @@ def search_orders(
     sort_order: search_sort_order = search_sort_order.desc,
 ):
     """
-    Search for routes items by route_name and/or potion.
+    Search for routes items by route_name.
 
     Route name and user sku filter to orders that contain the
     string (case insensitive). If the filters aren't provided, no
@@ -262,28 +262,28 @@ def get_followers_routes(friend_username: str, username: str):
             {"follower_id": friend_id, "user_id": user_id},
         )
         if not friend_check.fetchone():
-            "User isn't friends with other user, cannot retrieve routes."
+            return "User isn't friends with other user, cannot retrieve routes."
 
-            friends = connection.execute(
-                sqlalchemy.text(
-                    """
-            SELECT name, date_added, location, length_in_miles,difficulty, activities, coords, AVG(review.rating) AS Rating
-            FROM route
-            WHERE user_id = :friend_id
-                GROUP BY name
-            HAVING Rating >= 4 AND COUNT(review.rating) > 5
-            ORDER BY Rating DESC
-            LIMIT 10
-            """
-                ),
-                {"friend_id": friend_id},
-            ).scalars()
+        friends = connection.execute(
+            sqlalchemy.text(
+                """
+        SELECT name, address, length_in_miles , coordinates, AVG(review.rating) AS Rating
+        FROM routes
+        WHERE user_id = :friend_id
+            GROUP BY name
+        HAVING Rating >= 4 AND COUNT(review.rating) > 5
+        ORDER BY Rating DESC
+        LIMIT 10
+        """
+            ),
+            {"friend_id": friend_id},
+        ).scalars()
 
-            route_list = []
-            for item in friends:
-                route_list.append(item)
+        route_list = []
+        for item in friends:
+            route_list.append(item)
 
-            return route_list
+        return route_list
 
 
 @db.handle_errors

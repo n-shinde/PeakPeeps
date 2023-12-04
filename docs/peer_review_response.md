@@ -18,3 +18,11 @@
 16. Made route names unique, and added a check for similar route names by the same user to eliminate spamming of adding the same route.
 17. 
 
+# API Spec/Schema Feedback
+
+1. Updated schema.sql to match our updated tables in the database
+2. Made foreign key reference for user_id in followers, routes, and the ledgers
+3. Made naming conventions consistent (such as usernames, followers, etc.)
+4. Updated api spec to match our current endpoints
+5. Fixed redundancy in the reviews table with users
+6. 

@@ -71,7 +71,7 @@ def update_followers(user_to_update: str, follower_to_add: str):
                 WHERE id = :follower_id
                 """
             ),
-            {"follower_id": follower_id},
+            {"follower_id": follower_to_add_id},
         )
 
     return "OK"
@@ -79,45 +79,44 @@ def update_followers(user_to_update: str, follower_to_add: str):
 
 @db.handle_errors
 @router.get("/get_friends")
-def get_friends(username:str):
+def get_friends(username: str):
     """
-    This endpoint returns all of the friends of a certain user. The qualifications of a "friend" means that 
+    This endpoint returns all of the friends of a certain user. The qualifications of a "friend" means that
     both users follow each other. There will be two rows in the follower table to represent this relationship.
     """
     with db.engine.begin() as connection:
         user_id = get_id_from_username(username, connection)
-        
+
         get_following = connection.execute(
-                sqlalchemy.text(
-        		"""
+            sqlalchemy.text(
+                """
         	    SELECT follower_id
         		FROM followers
         		WHERE user_id = :user_id
           		"""
-        	    ),
-        	{"user_id":user_id}
-        	).scalars()
+            ),
+            {"user_id": user_id},
+        ).scalars()
 
         friends = []
         for item in get_following:
             get_friend = connection.execute(
-                    sqlalchemy.text(
-            		"""
+                sqlalchemy.text(
+                    """
             	    SELECT username
             		FROM users
                     JOIN followers ON users.user_id = followers.follower_id
             		WHERE follower_id = :user_id AND user_id = :follower_id
               		"""
-            	    ),
-            	{"follower_id":item.follower_id,"user_id":user_id}
-            	).scalars()
-            
+                ),
+                {"follower_id": item.follower_id, "user_id": user_id},
+            )
+
             if get_friend.fetchone():
-            	friends.append(get_friend.first())
+                friends.append(get_friend.first())
 
     return friends
-        
-        
+
 
 @db.handle_errors
 @router.post("/remove_follower")

@@ -60,7 +60,6 @@ def search_routes(
     time is 5 total line items.
     """
 
-
     # Josh was here, haha alex is cool
 
     # robin and Nidhi was here!!!
@@ -194,43 +193,42 @@ class Route(BaseModel):
 @router.post("/add")
 def post_add_route(route_to_add: Route):
     with db.engine.begin() as connection:
-	user_id = get_id_from_username(route_to_add.username, connection)
+        user_id = get_id_from_username(route_to_add.username, connection)
 
-	result = connection.execute(
+        result = connection.execute(
             sqlalchemy.text(
                 """
-                SELECT 1
-                FROM routes
-                WHERE user_id = :user_id
-		AND routes.name ILIKE '%{route_name}%'
-                """
-              ),
-            {"route_name": route_to_add.name,"user_id": user_id}
+                    SELECT 1
+                    FROM routes
+                    WHERE user_id = :user_id
+            AND routes.name ILIKE '%{route_name}%'
+                    """
+            ),
+            {"route_name": route_to_add.name, "user_id": user_id},
         )
 
         if result.fetchone():
-            return "User has already submitted this route"
-	
-	    
+            return "User has already submitted a review this route"
+
         new_id = connection.execute(
             sqlalchemy.text(
                 """
-		INSERT INTO routes (name, added_by_user_id, address, 
-		city, state, length_in_miles, coordinates)
-		VALUES (:name, :added_by_user_id, :address, :city,
-		:state, :length, :coordinates)
+        INSERT INTO routes (name, added_by_user_id, address, 
+        city, state, length_in_miles, coordinates)
+        VALUES (:name, :added_by_user_id, :address, :city,
+        :state, :length, :coordinates)
                 RETURNING id
-		"""
+        """
             ),
-                {
-                    "name": route_to_add.name,
-                    "added_by_user_id": user_id,
-                    "address": route_to_add.address,
-                    "length": route_to_add.length,
-                    "coordinates": route_to_add.coordinates,
-                    "state": route_to_add.state,
-                    "city": route_to_add.city,
-                },
+            {
+                "name": route_to_add.name,
+                "added_by_user_id": user_id,
+                "address": route_to_add.address,
+                "length": route_to_add.length,
+                "coordinates": route_to_add.coordinates,
+                "state": route_to_add.state,
+                "city": route_to_add.city,
+            },
         ).scalar_one()
 
         PEEP_COINS_FROM_ADDING_ROUTE = 10
@@ -241,10 +239,10 @@ def post_add_route(route_to_add: Route):
 @db.handle_errors
 @router.get("/popular")
 def get_popular_routes():
-	"""
-	This endpoint returns the top 10 most popular routes, determined by rating and requiring the 
- 	route to have more than 5 reviews.
- 	"""
+    """
+    This endpoint returns the top 10 most popular routes, determined by rating and requiring the
+    route to have more than 5 reviews.
+    """
     with db.engine.begin() as connection:
         popular_routes = connection.execute(
             sqlalchemy.text(
@@ -260,44 +258,43 @@ def get_popular_routes():
             )
         ).scalars()
 
-    route_list = []
-    for item in popular_routes:
-        route_list.append(item)
+        route_list = []
+        for item in popular_routes:
+            route_list.append(item)
 
-    return route_list
+        return route_list
 
 
 @db.handle_errors
 @router.get("/followers")
 def get_followers_routes(friend_username: str, username: str):
-	"""
-	friend_username: friend the user wants to view routes of
- 	username: the user making the request
+    """
+    friend_username: friend the user wants to view routes of
+    username: the user making the request
 
-  	This endpoint returns a friends routes. The logic assumes that a friend is when both users
-   	follow each other. Since we don't have accept follow request functionality, this is
-    	the next best thing. If users aren't friends, an error message is returned.
- 	"""
-	
+    This endpoint returns a friends routes. The logic assumes that a friend is when both users
+    follow each other. Since we don't have accept follow request functionality, this is
+    the next best thing. If users aren't friends, an error message is returned.
+    """
     with db.engine.begin() as connection:
         friend_id = get_id_from_username(friend_username, connection)
         user_id = get_id_from_username(username, connection)
 
         friend_check = connection.execute(
             sqlalchemy.text(
-		"""
+                """
 	    	SELECT A.follower_id AS user1, A.user_id AS user2
 		FROM followers A
 		JOIN followers B ON A.follower_id = B.user_id AND A.user_id = B.follower_id
 		WHERE A.follower_id = :follower_id AND A.user_id = :user_id
   		"""
-	    ),
-        {"follower_id":friend_id,"user_id":user_id}
+            ),
+            {"follower_id": friend_id, "user_id": user_id},
         )
 
         if not friend_check.fetchone():
             return "User isn't friends with other user, cannot retrieve routes."
-            
+
         friends = connection.execute(
             sqlalchemy.text(
                 """
@@ -323,53 +320,53 @@ def get_followers_routes(friend_username: str, username: str):
 @db.handle_errors
 @router.post("/complete")
 def complete_route(route_name: str, username: str):
-	"""
-	route_name: name of the route that was completed
- 	username: name of the user that completed the route
+    """
+    route_name: name of the route that was completed
+    username: name of the user that completed the route
 
-  	This endpoint serves to log when a user completes a route, giving them peepcoins. A user can 
-   	only complete a route once, to avoid spamming for peepcoins (the logic isn't perfect, but it
-    	will do for our resources). If a user has already completed this route, an error message is returned.
-  	"""
-	
+    This endpoint serves to log when a user completes a route, giving them peepcoins. A user can
+    only complete a route once, to avoid spamming for peepcoins (the logic isn't perfect, but it
+    will do for our resources). If a user has already completed this route, an error message is returned.
+    """
+
     with db.engine.begin() as connection:
         user_id = get_id_from_username(username, connection)
-	route_id = get_id_from_route_name(route_name, connection)
-	    
-	connection.execute(
+        route_id = get_id_from_route_name(route_name, connection)
+
+        connection.execute(
             sqlalchemy.text(
                 """
-                UPDATE routes
-                SET num_completed = num_completed + 1
-                WHERE routes.name = :name
-                """
+                    UPDATE routes
+                    SET num_completed = num_completed + 1
+                    WHERE routes.name = :name
+                    """
             ),
             {"name": route_name},
         )
 
-	completed_check = connection.execute(
-            sqlalchemy.text(
-		"""
-	    	SELECT user_id,route_id
-		FROM completed_route_ledger
-		WHERE user_id = :user_id AND route_id = :route_id
-  		"""
-	    ),
-	{"user_id":user_id,"route_id":route_id}
-	)
-	if completed_check.fetchone():
-		return "User has already completed this route"
-	
-	connection.execute(
+        completed_check = connection.execute(
             sqlalchemy.text(
                 """
-                INSERT INTO completed_route_ledger (user_id, route_id)
-                VALUES (:user_id,:route_id)
-                """
+                SELECT user_id,route_id
+            FROM completed_route_ledger
+            WHERE user_id = :user_id AND route_id = :route_id
+            """
             ),
-            {"user_id": user_id,"route_id":route_id},
+            {"user_id": user_id, "route_id": route_id},
         )
-	
+        if completed_check.fetchone():
+            return "User has already completed this route"
+
+        connection.execute(
+            sqlalchemy.text(
+                """
+                    INSERT INTO completed_route_ledger (user_id, route_id)
+                    VALUES (:user_id,:route_id)
+                    """
+            ),
+            {"user_id": user_id, "route_id": route_id},
+        )
+
         PEEP_COINS_FROM_COMPLETING_ROUTE = 15
         add_peepcoins(user_id, PEEP_COINS_FROM_COMPLETING_ROUTE, connection)
 

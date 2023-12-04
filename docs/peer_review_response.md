@@ -18,6 +18,10 @@
 16. Made route names unique, and added a check for similar route names by the same user to eliminate spamming of adding the same route.
 17. Added completed_route_ledger to keep track of who completed what route. Allows us to check things like if a user has done a route before posting a review.
 18. Added completed route endpoint to give you peepcoins and see what routes you have finished. Only lets you complete each route once. (Ideally we’d have a gps track to determine if you actually completed the route, but for now this logic prevents spamming of completing a route)
+19. Added update review endpoint to allow a user to edit their review. Not adding a delete review endpoint as it may get complicated with peepcoins.
+20. Added a user peepcoin endpoint to return a users total peepcoins
+21. Fixed formatting to have consistent indenting and SQL query style
+22. Made sure a follower is actually following the user before removing them
 
 # API Spec/Schema Feedback
 

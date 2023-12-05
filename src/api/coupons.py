@@ -4,6 +4,7 @@ from typing import Optional
 from pydantic import BaseModel
 from src.api import auth
 from src import database as db
+from src.database import get_id_from_business
 
 
 router = APIRouter(
@@ -14,7 +15,7 @@ router = APIRouter(
 
 
 class Coupons(BaseModel):
-    business_id: int
+    business_name: str
     name: str
     cost: int
 
@@ -23,6 +24,11 @@ class Coupons(BaseModel):
 @router.put("/add")
 def add_coupon(request: Coupons):
     with db.engine.begin() as connection:
+        business_id = get_id_from_business(request.business_name, connection)
+
+        if business_id is None:
+             raise HTTPException(status_code=404, detail="Business does not exist")
+
         connection.execute(
             text(
                 """
@@ -31,7 +37,7 @@ def add_coupon(request: Coupons):
                 """
             ),
                 {
-                    "bus_id": request.business_id,
+                    "bus_id": business_id,
                     "name": request.name,
                     "cost": request.cost,
                 }

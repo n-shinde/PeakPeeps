@@ -20,7 +20,23 @@ class Business(BaseModel):
 @db.handle_errors
 @router.put("/add")
 def add_business(request: Business):
+
     with db.engine.begin() as connection:
+
+        business = connection.execute(
+            text(
+                """
+                SELECT id
+                FROM business
+                WHERE name = :name
+                """
+            ),
+            {"name": request.name}
+        ).scalars()
+
+        if business:
+            raise HTTPException(status_code=404, detail="Business already exists")
+        
         connection.execute(
             text(
                 """
@@ -33,28 +49,20 @@ def add_business(request: Business):
     return "OK"
 
 
-class ListBusinessesRequest(BaseModel):
-    should_have_valid_coupon: bool
-
-
 @db.handle_errors
 @router.get("/list")
-def list_businesses(request: ListBusinessesRequest):
+def list_businesses():
     with db.engine.begin() as connection:
-        if request.should_have_valid_coupon:
-            query = text(
-                """
-                select DISTINCT id, name, address from business
-                WHERE exists
-                    (SELECT * FROM coupons
-                    WHERE coupons.business_id = business.id
-                        AND coupons.valid)
+
+        result = connection.execute(
+            text(
+            """
+            SELECT DISTINCT id, name, address
+            FROM business
+            JOIN coupons ON business.id = coupons.business_id
+            WHERE coupons.valid 
             """
             )
-        else:
-            query = text("SELECT DISTINCT id, name, address from business")
-        result = connection.execute(query).all()
-        if not result:
-            return f"Failed to look up businesses"
+        ).fetchall()
 
-        return [row._asdict() for row in result]
+    return [{"id": row[0], "name": row[1], "address": row[2]} for row in result]

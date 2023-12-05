@@ -3,6 +3,8 @@ from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from src.api import auth
 from src import database as db
+from src.api.users import get_username
+from src.api.users import get_id_from_username
 
 router = APIRouter(
     prefix="/peepcoins",
@@ -25,7 +27,9 @@ add_peepcoins_query = text(
 
 
 @db.handle_errors
-def add_peepcoins(user_id, amount, connection):
+def add_peepcoins(username, amount, connection):
+    user_id = get_id_from_username(username, connection)
+
     query = text(
         """
         INSERT INTO user_peepcoin_ledger (user_id, change)
@@ -41,3 +45,23 @@ def put_add_peepcoins(request: PeepCoinRequest):
     with db.engine.begin() as connection:
         add_peepcoins(request.user_id, request.change, connection)
     return "OK"
+
+@db.handle_errors
+@router.get("/get")
+def get_peepcoins(username: str):
+
+    with db.engine.begin() as connection:
+        user_id = get_id_from_username(username, connection)
+
+        query = text(
+        """
+        SELECT SUM(change)
+        FROM user_peepcoin_ledger
+        WHERE user_id = :user_id
+        """
+        )
+
+        result = connection.execute(query,  {"user_id": user_id})
+
+        if not result:
+            return f"failed to look up peepcoins for user: {username}"

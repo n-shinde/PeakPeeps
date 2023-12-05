@@ -18,7 +18,6 @@ router = APIRouter(
 @router.post("/create_account")
 def post_create_account(username: str):
     with db.engine.begin() as connection:
-
         exists = connection.execute(
             sqlalchemy.text(
                 """
@@ -26,8 +25,8 @@ def post_create_account(username: str):
                 FROM users
                 WHERE username = :username
                 """
-            {"name": username},
-        )).scalars()
+            ),{"name": username}
+        ).scalars()
 
         if exists.fetchone():
             return "Username already taken. Please pick another username."

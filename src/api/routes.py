@@ -199,6 +199,21 @@ def get_id_from_route_name(route_name, connection):
 
 @router.post("/add")
 def post_add_route(route_to_add: Route):
+    '''
+    Adds a new route to the database and awards PeepCoins to the user.
+
+    Parameters:
+    - route_to_add (Route): The route information to be added, including name, username,
+                           address, city, state, length, and coordinates.
+
+    Returns:
+    - int: The ID of the newly added route in the database.
+
+    Raises:
+    - HTTPException: If the specified user does not exist (status_code=404).
+                    If a route with a similar name and in the same city has already been
+                    added by another user, a message is returned indicating the conflict.
+    '''
 
     with db.engine.begin() as connection:
         user_id = get_id_from_username(route_to_add.username, connection)
@@ -294,6 +309,13 @@ def get_followers_routes(follower_username: str, username: str):
         follower_id = get_id_from_username(follower_username, connection)
         user_id = get_id_from_username(username, connection)
 
+        if not follower_id:
+            raise HTTPException(status_code=404, detail="Follower User does not exist")
+        
+        if not user_id:
+            raise HTTPException(status_code=404, detail="User does not exist")
+        
+
         follower_check = connection.execute(
             sqlalchemy.text(
             """
@@ -330,12 +352,15 @@ def get_followers_routes(follower_username: str, username: str):
 @router.post("/complete")
 def complete_route(request: CompleteRoute):
     """
-    route_name: name of the route that was completed
-    username: name of the user that completed the route
+    Log when a user completes a route, awarding them PeepCoins. Users can only complete a route once
+    to prevent spamming for PeepCoins. If a user has already completed the route, an error message is returned.
 
-    This endpoint serves to log when a user completes a route, giving them peepcoins. A user can
-    only complete a route once, to avoid spamming for peepcoins (the logic isn't perfect, but it
-    will do for our resources). If a user has already completed this route, an error message is returned.
+    Parameters:
+    - request (CompleteRoute): An object containing information about the completed route,
+                               including the route name and the username of the user who completed it.
+
+    Returns:
+    - str: A confirmation message ("OK") indicating that the route completion was successfully logged.
     """
 
     with db.engine.begin() as connection:

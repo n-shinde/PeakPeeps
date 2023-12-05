@@ -77,9 +77,9 @@ def get_valid_coupons_from_business(business_name: str):
 class EditCouponRequest(BaseModel):
     business_name: str
     coupon_name: str
-    new_coupon_name: Optional[str]
+    new_coupon_name: str
     is_valid: bool
-    price: Optional[int]
+    price: int
 
 
 @db.handle_errors
@@ -119,9 +119,9 @@ def edit_coupon(request: EditCouponRequest):
         id = current_coupon.id
 
         # updating the values of the coupon if they were passed in the request
-        name = request.new_coupon_name or current_coupon.name
+        name = request.new_coupon_name 
         is_valid = request.is_valid 
-        price = request.price or current_coupon.price
+        price = request.price 
 
         query = text(
             "UPDATE coupons SET name = :name, valid = :is_valid, price = :price WHERE id = :id"

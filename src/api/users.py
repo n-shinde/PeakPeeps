@@ -26,11 +26,11 @@ def post_create_account(username: str):
                 FROM users
                 WHERE username = :username
                 """
-            ),{"name": username}
+            ),{"username": username}
         ).scalars()
 
         if result is not None:
-            raise sqlalchemy.exc.NoResultFound("Username already taken. Please pick another username.")
+            raise HTTPException(status_code=404, detail="Username already taken. Please pick another username.")
 
 
         new_id = connection.execute(
@@ -55,8 +55,8 @@ def get_user(username: str):
         ),{"username": username}
         ).scalar_one()
 
-        if not result.fetchone():
-            return "This user does not exist"
+        if result is None:
+            raise HTTPException(status_code=404, detail="This user does not exist.")
 
         return result._asdict()
     
@@ -97,8 +97,9 @@ def update_followers(user_to_update: str, follower_to_add: str):
             {"user_id": user_update_id},
         ).scalar()
 
-        if not exists.fetchone():
-            return "Username doesn't exist"
+        if exists is None:
+            raise HTTPException(status_code=404, detail="This user does not exist.")
+
 
         # Make sure requested follower exists
         exists = connection.execute(
@@ -112,8 +113,8 @@ def update_followers(user_to_update: str, follower_to_add: str):
             {"user_id": follower_to_add_id},
         ).scalar()
 
-        if exists.fetchone():
-            return "Follower username doesn't exist"
+        if exists is None:
+            raise HTTPException(status_code=404, detail="Follower username does not exist.")
 
         # Make sure they dont already follow each other
         exists = connection.execute(
@@ -127,8 +128,8 @@ def update_followers(user_to_update: str, follower_to_add: str):
             {"user_id": user_update_id, "follower_id": follower_to_add_id},
         ).scalar()
 
-        if exists.fetchone():
-            return "User already following other user"
+        if exists is not None:
+            raise HTTPException(status_code=404, detail="User already following other user.")
 
         # First add new follower to followers table
         connection.execute(
@@ -166,8 +167,20 @@ def get_following(username: str):
     with db.engine.begin() as connection:
         user_id = get_id_from_username(username, connection)
 
+        exists = connection.execute(
+            sqlalchemy.text(
+                """
+                SELECT username
+                FROM users
+                WHERE user_id = :user_id
+                """
+            ),
+            {"user_id": user_id},
+        ).scalar()
 
-
+        if exists is None:
+            raise HTTPException(status_code=404, detail="User doesn't exist.")
+    
         get_following = connection.execute(
             sqlalchemy.text(
                 """
@@ -217,11 +230,11 @@ def remove_follower(user_to_update: str, follower_to_remove: str):
                 WHERE user_id = :user_id
                 """
             ),
-            {"user_id": user_update_id},
+            {"user_id": user_to_update_id},
         ).scalar()
 
-        if not exists.fetchone():
-            return "Username doesn't exist"
+        if exists is None:
+            raise HTTPException(status_code=404, detail="User doesn't exist.")
 
         # Make sure requested follower exists
         exists = connection.execute(
@@ -232,11 +245,11 @@ def remove_follower(user_to_update: str, follower_to_remove: str):
                 WHERE user_id = :user_id
                 """
             ),
-            {"user_id": follower_to_add_id},
+            {"user_id": follower_to_remove_id},
         ).scalar()
 
-        if exists.fetchone():
-            return "Follower username doesn't exist"
+        if exists is None:
+            raise HTTPException(status_code=404, detail="Follower username doesn't exist.")
 
         # Make sure actually follow each other
         exists = connection.execute(
@@ -247,12 +260,11 @@ def remove_follower(user_to_update: str, follower_to_remove: str):
                 WHERE user_id = :user_id AND follower_id = :follower_id
                 """
             ),
-            {"user_id": user_update_id, "follower_id": follower_to_add_id},
+            {"user_id": user_to_update_id, "follower_id": follower_to_remove_id},
         ).scalar()
 
-        if not exists.fetchone():
-            return "User isn't following other user"
-
+        if exists is not None:
+            raise HTTPException(status_code=404, detail="User isn't following other user.")
 
         # Find them in followers table and remove
         connection.execute(

@@ -47,9 +47,14 @@ def get_user(username: str):
             WHERE username = :username
             """
         ),{"username": username}
-        ).fetchone()
-        
-        return dict(result)
+        ).fetchall()
+
+        user_info = (
+            "id"=result[0]
+            "username"=result[1]
+            "num_followers"=result[2]   
+        )
+        return user_info
 
 
 @db.handle_errors

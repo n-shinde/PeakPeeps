@@ -1,5 +1,7 @@
 import sqlalchemy
 from fastapi import APIRouter, Depends
+from typing import Optional
+from sqlalchemy import text
 from pydantic import BaseModel
 from src.api import auth
 from src import database as db
@@ -85,3 +87,51 @@ def post_add_review(review_to_add: Reviews):
         add_peepcoins(user_id, PEEP_COINS_FROM_POSTING_REVIEW, connection)
 
     return f"Review ID: {review_id}"
+
+class EditReviewRequest(BaseModel):
+    username: str
+    route_name: str
+    new_description: Optional[str]
+    new_rating: Optional[int]
+    new_difficulty: Optional[int]
+
+
+@db.handle_errors
+@router.post("/update")
+def post_update_review(request: EditReviewRequest):
+    with db.engine.begin() as connection:
+        # get the current review
+        route_id = get_id_from_route_name(request.route_name, connection)
+
+        query = """
+            SELECT username, route_id, description, rating, difficulty
+            FROM reviews 
+            WHERE username = :username AND route_id = :route_id
+        """
+        current_review = connection.execute(
+            text(query),
+            {
+                "username": request.username,
+                "route_id": route_id,
+            },
+        ).first()
+
+        if not current_review:
+            return f"Could not find a review from user {request.username} for route {request.route_name}"
+
+        # updating the values of the coupon if they were passed in the request
+        description = request.new_description or current_review.description
+        rating = request.new_rating or current_review.rating
+        difficulty = request.new_difficulty or current_review.difficulty
+
+        query = text(
+            """
+            UPDATE reviews SET description = :description, rating = :rating, difficulty = :difficulty
+            WHERE route_id = :route_id
+            """
+        )
+        connection.execute(
+            query, {"description": description, "rating": rating, "difficulty": difficulty, "route_id": route_id}
+        )
+        
+        return "OK"

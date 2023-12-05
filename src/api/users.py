@@ -35,6 +35,16 @@ def get_user(username: str):
         )
         result = connection.execute(query, {"username": username}).one()
         return result._asdict()
+    
+@db.handle_errors
+@router.get("/{user_id}")
+def get_username(user_id: int):
+    with db.engine.begin() as connection:
+        query = sqlalchemy.text(
+            "SELECT username FROM users where id = :user_id"
+        )
+        result = connection.execute(query, {"user_id": user_id}).scalar_one()
+        return result
 
 
 @db.handle_errors

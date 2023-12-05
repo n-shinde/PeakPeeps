@@ -263,9 +263,10 @@ def get_popular_routes():
             )
         ).scalars()
 
-        route_list = []
-        for item in popular_routes:
-            route_list.append(item)
+        route_list = list(popular_routes)
+
+        # for item in popular_routes:
+        #     route_list.append(item)
 
         return route_list
 

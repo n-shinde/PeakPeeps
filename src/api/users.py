@@ -19,7 +19,7 @@ router = APIRouter(
 def post_create_account(username: str):
     with db.engine.begin() as connection:
         user_id = get_id_from_username(username, connection)
-        if user_id:
+        if user_id is not None:
             raise HTTPException(status_code=404, detail="User already exists")
 
         new_id = connection.execute(
@@ -35,7 +35,7 @@ def post_create_account(username: str):
 def get_user(username: str):
     with db.engine.begin() as connection:
         user_id = get_id_from_username(username, connection)
-        if not user_id:
+        if user_id is None:
             raise HTTPException(status_code=404, detail="User does not exists")
             
         result = connection.execute(
@@ -46,19 +46,9 @@ def get_user(username: str):
             WHERE username = :username
             """
         ),{"username": username}
-        ).scalar_one()
+        ).scalars()
         
         return result._asdict()
-    
-@db.handle_errors
-@router.get("/{user_id}")
-def get_username(user_id: int):
-    with db.engine.begin() as connection:
-        query = sqlalchemy.text(
-            "SELECT username FROM users where id = :user_id"
-        )
-        result = connection.execute(query, {"user_id": user_id}).scalar_one()
-        return result
 
 
 @db.handle_errors
@@ -130,7 +120,7 @@ def get_following(username: str):
     """
     with db.engine.begin() as connection:
         user_id = get_id_from_username(username, connection)
-        if not user_id:
+        if user_id is None:
             raise HTTPException(status_code=404, detail="User does not exist")
 
 
@@ -173,9 +163,9 @@ def remove_follower(user_to_update: str, follower_to_remove: str):
     with db.engine.begin() as connection:
         follower_to_remove_id = get_id_from_username(follower_to_remove, connection)
         user_to_update_id = get_id_from_username(user_to_update, connection)
-        if not user_to_update_id:
+        if user_to_update_id is None:
             raise HTTPException(status_code=404, detail="User does not exist")
-        if not follower_to_remove_id:
+        if follower_to_remove_id is None:
             raise HTTPException(status_code=404, detail="Follower does not exist")
 
 
@@ -188,7 +178,7 @@ def remove_follower(user_to_update: str, follower_to_remove: str):
                 WHERE user_id = :user_id AND follower_id = :follower_id
                 """
             ),
-            {"user_id": user_update_id, "follower_id": follower_to_add_id},
+            {"user_id": user_to_update_id, "follower_id": follower_to_add_id},
         ).scalar()
 
         if not exists:

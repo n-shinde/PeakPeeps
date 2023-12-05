@@ -12,7 +12,7 @@ router = APIRouter(
     tags=["users"],
     dependencies=[Depends(auth.get_api_key)],
 )
-
+ 
 
 @db.handle_errors
 @router.post("/create_account")

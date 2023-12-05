@@ -41,8 +41,8 @@ def add_coupon(request: Coupons):
         connection.execute(
             text(
                 """
-                INSERT INTO coupons (business_id, name, price)
-                VALUES (:bus_id, :name, :price)
+                INSERT INTO coupons (business_id, name, price, valid)
+                VALUES (:bus_id, :name, :price, True)
                 """
             ),
                 {

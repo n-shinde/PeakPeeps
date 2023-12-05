@@ -13,12 +13,13 @@ router = APIRouter(
     dependencies=[Depends(auth.get_api_key)],
 )
  
-
+ 
 @db.handle_errors
 @router.post("/create_account")
 def post_create_account(username: str):
     with db.engine.begin() as connection:
-        exists = connection.execute(
+        
+        result = connection.execute(
             sqlalchemy.text(
                 """
                 SELECT (user_id)
@@ -28,8 +29,8 @@ def post_create_account(username: str):
             ),{"name": username}
         ).scalars()
 
-        if exists.fetchone():
-            return "Username already taken. Please pick another username."
+        if result is not None:
+            raise sqlalchemy.exc.NoResultFound("Username already taken. Please pick another username.")
 
 
         new_id = connection.execute(

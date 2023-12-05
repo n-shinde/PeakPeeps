@@ -105,26 +105,44 @@ class EditReviewRequest(BaseModel):
 @db.handle_errors
 @router.post("/update")
 def post_update_review(request: EditReviewRequest):
+    """
+    Update a user's review for a specific route.
+
+    Parameters:
+    - request (EditReviewRequest): An object containing information about the review update,
+                                   including the username, route name, and new review details.
+
+    Returns:
+    - str: A confirmation message ("OK") indicating that the review was successfully updated.
+    """
+
     with db.engine.begin() as connection:
         # get the current review
+        user_id = get_id_from_username(request.username, connection)
         route_id = get_id_from_route_name(request.route_name, connection)
 
+        if not user_id:
+            raise HTTPException(status_code=404, detail="User does not exist")
+        
+        if not route_id:
+            raise HTTPException(status_code=404, detail="Route does not exist")
+
         query = """
-            SELECT username, route_id, description, rating, difficulty
-            FROM reviews 
-            WHERE username = :username AND route_id = :route_id
+            SELECT user_id, route_id, description, rating, difficulty
+            FROM review 
+            WHERE user_id = :user_id AND route_id = :route_id
         """
         current_review = connection.execute(
             text(query),
             {
-                "username": request.username,
+                "user_id": user_id,
                 "route_id": route_id,
             },
         ).first()
 
         if not current_review:
-            return f"Could not find a review from user {request.username} for route {request.route_name}"
-
+            raise HTTPException(status_code=404, detail=f"Could not find a review from user {request.username} for route {request.route_name}")
+        
         # updating the values of the coupon if they were passed in the request
         description = request.new_description or current_review.description
         rating = request.new_rating or current_review.rating
@@ -132,12 +150,12 @@ def post_update_review(request: EditReviewRequest):
 
         query = text(
             """
-            UPDATE reviews SET description = :description, rating = :rating, difficulty = :difficulty
-            WHERE route_id = :route_id
+            UPDATE review SET description = :description, rating = :rating, difficulty = :difficulty
+            WHERE route_id = :route_id AND user_id = :user_id
             """
         )
         connection.execute(
-            query, {"description": description, "rating": rating, "difficulty": difficulty, "route_id": route_id}
+            query, {"description": description, "rating": rating, "difficulty": difficulty, "route_id": route_id, "user_id": user_id}
         )
         
         return "OK"

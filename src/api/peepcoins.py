@@ -53,6 +53,9 @@ def get_peepcoins(username: str):
     with db.engine.begin() as connection:
         user_id = get_id_from_username(username, connection)
 
+        if not user_id:
+            raise HTTPException(status_code=404, detail="User does not exist")
+
         query = text(
         """
         SELECT SUM(change)
@@ -63,5 +66,14 @@ def get_peepcoins(username: str):
 
         result = connection.execute(query, {"user_id": user_id})
 
-        if not result:
-            return f"failed to look up peepcoins for user: {username}"
+        amount = result.fetchone()
+        print(amount)
+
+        if amount is not None and amount[0] is not None:
+            # Extract the integer value from the tuple
+            peepcoin_amount = amount[0]
+        else:
+            # Handle the case where there's no result or the result is None
+            peepcoin_amount = 0
+
+        return peepcoin_amount

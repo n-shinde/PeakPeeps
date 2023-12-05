@@ -286,7 +286,8 @@ def get_popular_routes():
                 JOIN
                     review ON routes.id = review.route_id
                 GROUP BY
-                    routes.id
+                    routes.id, routes.name, routes.city, routes.length_in_miles
+                HAVING COUNT(*) >= 5
             )
             SELECT
                 name,

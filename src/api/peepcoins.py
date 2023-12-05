@@ -61,7 +61,7 @@ def get_peepcoins(username: str):
         """
         )
 
-        result = connection.execute(query,  {"user_id": user_id})
+        result = connection.execute(query, {"user_id": user_id})
 
         if not result:
             return f"failed to look up peepcoins for user: {username}"

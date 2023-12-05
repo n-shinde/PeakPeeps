@@ -325,6 +325,11 @@ def get_followers_routes(follower_username: str, username: str):
     username wants to look at follower_user routes
 
     """
+
+    if follower_username == username:
+        raise HTTPException(status_code=404, detail="Invalid input, can't see the routes of yourself")
+
+
     with db.engine.begin() as connection:
         follower_id = get_id_from_username(follower_username, connection)
         user_id = get_id_from_username(username, connection)
@@ -347,9 +352,9 @@ def get_followers_routes(follower_username: str, username: str):
         )
 
         if not follower_check.fetchone():
-            return "User isn't following the other user, cannot retrieve their routes."
-
-        follower_routes = connection.execute(
+            raise HTTPException(status_code=404, detail="User isn't following the other user, cannot retrieve their routes.")
+        
+        result = connection.execute(
             sqlalchemy.text(
                 """
                 SELECT name, address, city, state, length_in_miles
@@ -358,11 +363,9 @@ def get_followers_routes(follower_username: str, username: str):
                 """
             ),
             {"follower_id": follower_id},
-        ).scalars()
+        )
 
-        route_list = []
-        for item in follower_routes:
-            route_list.append(item)
+        route_list = [row[0] for row in result.fetchall()]
 
         return route_list
 

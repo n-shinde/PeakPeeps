@@ -57,10 +57,10 @@ def list_businesses():
         result = connection.execute(
             text(
             """
-            SELECT DISTINCT id, name, address
-            FROM business
-            JOIN coupons ON business.id = coupons.business_id
-            WHERE coupons.valid 
+            SELECT DISTINCT b.id, b.name, b.address
+            FROM business as b
+            JOIN coupons as c ON b.id = c.business_id
+            WHERE c.valid 
             """
             )
         ).fetchall()

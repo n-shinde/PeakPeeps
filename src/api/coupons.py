@@ -94,7 +94,7 @@ def edit_coupon(request: EditCouponRequest):
              raise HTTPException(status_code=404, detail="Business does not exist")
         
         #valid coupon check
-        coupon_id = get_id_from_business(request.coupon_name, connection)
+        coupon_id = get_id_from_coupons(request.coupon_name, connection)
 
         if coupon_id is None:
              raise HTTPException(status_code=404, detail="Coupon does not exist")
@@ -137,39 +137,39 @@ class GetCouponRequest(BaseModel):
     coupon_name: str
 
 
-@db.handle_errors
-@router.post("/get")
-def get_coupon(request: GetCouponRequest):
-    with db.engine.begin() as connection:
-        business_id = get_id_from_business(request.business_name, connection)
+# @db.handle_errors
+# @router.post("/get")
+# def get_coupon(request: GetCouponRequest):
+#     with db.engine.begin() as connection:
+#         business_id = get_id_from_business(request.business_name, connection)
 
-        if business_id is None:
-             raise HTTPException(status_code=404, detail="Business does not exist")
+#         if business_id is None:
+#              raise HTTPException(status_code=404, detail="Business does not exist")
         
-        #valid coupon check
-        coupon_id = get_id_from_business(request.coupon_name, connection)
+#         #valid coupon check
+#         coupon_id = get_id_from_business(request.coupon_name, connection)
 
-        if coupon_id is None:
-             raise HTTPException(status_code=404, detail="Coupon does not exist")
+#         if coupon_id is None:
+#              raise HTTPException(status_code=404, detail="Coupon does not exist")
         
-        # get the current coupon
-        query = """
-            SELECT id, name, valid, price 
-            FROM coupons
-            WHERE name = :coupon_name AND id = :id
-        """
-        coupon = connection.execute(
-            text(query),
-            {
-                "coupon_name": request.coupon_name,
-                "id": business_id,
-            },
-        ).first()
+#         # get the current coupon
+#         query = """
+#             SELECT id, name, valid, price 
+#             FROM coupons
+#             WHERE name = :coupon_name AND id = :id
+#         """
+#         coupon = connection.execute(
+#             text(query),
+#             {
+#                 "coupon_name": request.coupon_name,
+#                 "id": business_id,
+#             },
+#         ).first()
 
-        if not coupon:
-            return f"Could not find a coupon from business {request.business_name} for coupon {request.coupon_name}"
+#         if not coupon:
+#             return f"Could not find a coupon from business {request.business_name} for coupon {request.coupon_name}"
         
-        return coupon
+#         return coupon
 
 
 class CouponRequest(BaseModel):
@@ -236,8 +236,9 @@ def buy_coupon(coupon_name: str, username: str, connection):
     connection.execute(query, {"user_id": user_id, "coupon_id": coupon_id})
 
     query = text (
-        """WITH insert AS 
-            (INSERT INTO user_peepcoin_ledger (user_id, change) VALUES (:user_id, -1 * (SELECT price FROM coupons where id = :coupon_id)))
+        """ 
+        INSERT INTO user_peepcoin_ledger (user_id, change) 
+        VALUES (:user_id, -1 * (SELECT price FROM coupons where id = :coupon_id))
         """
     )
     connection.execute(query, {"user_id": user_id, "coupon_id": coupon_id})

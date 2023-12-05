@@ -12,28 +12,52 @@ router = APIRouter(
     tags=["users"],
     dependencies=[Depends(auth.get_api_key)],
 )
-
+ 
 
 @db.handle_errors
 @router.post("/create_account")
 def post_create_account(username: str):
     with db.engine.begin() as connection:
+
+        exists = connection.execute(
+            sqlalchemy.text(
+                """
+                SELECT (user_id)
+                FROM users
+                WHERE username = :username
+                """
+            {"name": username},
+        )).scalars()
+
+        if exists.fetchone():
+            return "Username already taken. Please pick another username."
+
+
         new_id = connection.execute(
             sqlalchemy.text("INSERT INTO users (username) VALUES (:name) RETURNING id"),
             {"name": username},
         ).scalar_one()
 
-        return new_id
+        return f"User id: {new_id}"
 
 
 @db.handle_errors
 @router.get("/{username}")
 def get_user(username: str):
     with db.engine.begin() as connection:
-        query = sqlalchemy.text(
-            "SELECT id, username, num_followers FROM users where username = :username"
-        )
-        result = connection.execute(query, {"username": username}).one()
+        result = connection.execute(
+            sqlalchemy.text(
+            """
+            SELECT id, username, num_followers 
+            FROM users 
+            WHERE username = :username
+            """
+        ),{"username": username}
+        ).scalar_one()
+
+        if not result.fetchone():
+            return "This user does not exist"
+
         return result._asdict()
     
 @db.handle_errors
@@ -60,6 +84,51 @@ def update_followers(user_to_update: str, follower_to_add: str):
         # Get the user to update id
         user_update_id = get_id_from_username(user_to_update, connection)
         follower_to_add_id = get_id_from_username(follower_to_add, connection)
+
+        # Edge condition to make sure user exists
+        exists = connection.execute(
+            sqlalchemy.text(
+                """
+                SELECT username
+                FROM users
+                WHERE user_id = :user_id
+                """
+            ),
+            {"user_id": user_update_id},
+        ).scalar()
+
+        if not exists.fetchone():
+            return "Username doesn't exist"
+
+        # Make sure requested follower exists
+        exists = connection.execute(
+            sqlalchemy.text(
+                """
+                SELECT username
+                FROM users
+                WHERE user_id = :user_id
+                """
+            ),
+            {"user_id": follower_to_add_id},
+        ).scalar()
+
+        if exists.fetchone():
+            return "Follower username doesn't exist"
+
+        # Make sure they dont already follow each other
+        exists = connection.execute(
+            sqlalchemy.text(
+                """
+                SELECT user_id, follower_id
+                FROM followers
+                WHERE user_id = :user_id AND follower_id = :follower_id
+                """
+            ),
+            {"user_id": user_update_id, "follower_id": follower_to_add_id},
+        ).scalar()
+
+        if exists.fetchone():
+            return "User already following other user"
 
         # First add new follower to followers table
         connection.execute(
@@ -88,8 +157,8 @@ def update_followers(user_to_update: str, follower_to_add: str):
 
 
 @db.handle_errors
-@router.get("/get_friends")
-def get_friends(username: str):
+@router.get("/get_following")
+def get_following(username: str):
     """
     This endpoint returns all of the friends of a certain user. The qualifications of a "friend" means that
     both users follow each other. There will be two rows in the follower table to represent this relationship.
@@ -97,35 +166,39 @@ def get_friends(username: str):
     with db.engine.begin() as connection:
         user_id = get_id_from_username(username, connection)
 
+
+
         get_following = connection.execute(
             sqlalchemy.text(
                 """
-        	    SELECT follower_id
-        		FROM followers
-        		WHERE user_id = :user_id
+        	    SELECT username
+        		FROM users
+                JOIN followers ON followers.follower_id = users.user_id
+        		WHERE followers.user_id = :user_id
           		"""
             ),
             {"user_id": user_id},
         ).scalars()
 
-        friends = []
-        for item in get_following:
-            get_friend = connection.execute(
-                sqlalchemy.text(
-                    """
-            	    SELECT username
-            		FROM users
-                    JOIN followers ON users.user_id = followers.follower_id
-            		WHERE follower_id = :user_id AND user_id = :follower_id
-              		"""
-                ),
-                {"follower_id": item.follower_id, "user_id": user_id},
-            )
+        
+        # friends = []
+        # for item in get_following:
+        #     get_friend = connection.execute(
+        #         sqlalchemy.text(
+        #             """
+        #     	    SELECT username
+        #     		FROM users
+        #             JOIN followers ON users.user_id = followers.follower_id
+        #     		WHERE follower_id = :user_id AND user_id = :follower_id
+        #       		"""
+        #         ),
+        #         {"follower_id": item.follower_id, "user_id": user_id},
+        #     )
 
-            if get_friend.fetchone():
-                friends.append(get_friend.first())
+        #     if get_friend.fetchone():
+        #         friends.append(get_friend.first())
 
-    return friends
+    return list(get_following)
 
 
 @db.handle_errors
@@ -135,12 +208,58 @@ def remove_follower(user_to_update: str, follower_to_remove: str):
         follower_to_remove_id = get_id_from_username(follower_to_remove, connection)
         user_to_update_id = get_id_from_username(user_to_update, connection)
 
+        # Edge condition to make sure user exists
+        exists = connection.execute(
+            sqlalchemy.text(
+                """
+                SELECT username
+                FROM users
+                WHERE user_id = :user_id
+                """
+            ),
+            {"user_id": user_update_id},
+        ).scalar()
+
+        if not exists.fetchone():
+            return "Username doesn't exist"
+
+        # Make sure requested follower exists
+        exists = connection.execute(
+            sqlalchemy.text(
+                """
+                SELECT username
+                FROM users
+                WHERE user_id = :user_id
+                """
+            ),
+            {"user_id": follower_to_add_id},
+        ).scalar()
+
+        if exists.fetchone():
+            return "Follower username doesn't exist"
+
+        # Make sure actually follow each other
+        exists = connection.execute(
+            sqlalchemy.text(
+                """
+                SELECT user_id, follower_id
+                FROM followers
+                WHERE user_id = :user_id AND follower_id = :follower_id
+                """
+            ),
+            {"user_id": user_update_id, "follower_id": follower_to_add_id},
+        ).scalar()
+
+        if not exists.fetchone():
+            return "User isn't following other user"
+
+
         # Find them in followers table and remove
         connection.execute(
             sqlalchemy.text(
                 """
                 DELETE FROM followers
-                WHERE (user_id = :user_to_update_id) and (follower_id = :remove_id)
+                WHERE (user_id = :user_to_update_id) AND (follower_id = :remove_id)
                 """
             ),
             {

@@ -276,51 +276,46 @@ def get_popular_routes():
 
 @db.handle_errors
 @router.get("/followers")
-def get_followers_routes(friend_username: str, username: str):
+def get_followers_routes(follower_username: str, username: str):
     """
-    friend_username: friend the user wants to view routes of
+    follower_username: follower the user wants to view routes of
     username: the user making the request
 
-    This endpoint returns a friends routes. The logic assumes that a friend is when both users
-    follow each other. Since we don't have accept follow request functionality, this is
-    the next best thing. If users aren't friends, an error message is returned.
+    This endpoint returns a follower's routes. 
+    If the follower's username is incorrect or the person doesn't actually follow the user,
+    an error message is returned.
     """
     with db.engine.begin() as connection:
-        friend_id = get_id_from_username(friend_username, connection)
+        follower_id = get_id_from_username(follower_username, connection)
         user_id = get_id_from_username(username, connection)
 
-        friend_check = connection.execute(
+        follower_check = connection.execute(
             sqlalchemy.text(
-                """
-	    	SELECT A.follower_id AS user1, A.user_id AS user2
-		FROM followers A
-		JOIN followers B ON A.follower_id = B.user_id AND A.user_id = B.follower_id
-		WHERE A.follower_id = :follower_id AND A.user_id = :user_id
-  		"""
+            """
+	    	SELECT follower_id 
+            FROM followers
+            WHERE user_id = :user_id AND follower_id = :follower_id
+  		    """
             ),
-            {"follower_id": friend_id, "user_id": user_id},
+            {"user_id": user_id, "follower_id": follower_id},
         )
 
-        if not friend_check.fetchone():
-            return "User isn't friends with other user, cannot retrieve routes."
+        if not follower_check.fetchone():
+            return "User isn't following the other user, cannot retrieve their routes."
 
-        friends = connection.execute(
+        follower_routes = connection.execute(
             sqlalchemy.text(
                 """
-        SELECT name, address, length_in_miles , coordinates, AVG(review.rating) AS Rating
-        FROM routes
-        WHERE user_id = :friend_id
-            GROUP BY name
-        HAVING Rating >= 4 AND COUNT(review.rating) > 5
-        ORDER BY Rating DESC
-        LIMIT 10
-        """
+                SELECT name, address, city, state, length_in_miles
+                FROM routes
+                WHERE added_by_user_id = :follower_id
+                """
             ),
-            {"friend_id": friend_id},
+            {"follower_id": follower_id},
         ).scalars()
 
         route_list = []
-        for item in friends:
+        for item in follower_routes:
             route_list.append(item)
 
         return route_list

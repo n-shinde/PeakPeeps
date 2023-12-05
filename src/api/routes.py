@@ -108,30 +108,35 @@ def search_routes(
         )
 
     len_of_data = result_len.scalar()
-    print(len_of_data)
+    #print(len_of_data)
 
-    query = f"""
+    #print(sort_by_col)
+    #print(sort_by_order)
+    
+    # Assuming you have a SQLAlchemy engine named 'engine'
+    with db.engine.begin() as connection:
+        result = connection.execute(
+            sqlalchemy.text(
+                """
                 SELECT
-                routes.name AS name,
-                routes.length_in_miles AS length_miles,
-                routes.city AS city,
-                routes.added_by_user_id AS user
-
+                    routes.name AS name,
+                    routes.length_in_miles AS length_miles,
+                    routes.city AS city,
+                    routes.added_by_user_id AS user
                 FROM routes
-
                 JOIN users ON 
                     users.id = routes.added_by_user_id
-
-                AND routes.name ILIKE '%{route_name}%'
-                AND routes.name ILIKE '%{user_added}%'
+                WHERE 
+                    routes.name ILIKE '%' || :route_name || '%'
+                    AND users.username ILIKE '%' || :user_added || '%'
                 ORDER BY
-                {sort_by_col} {sort_by_order}
-                LIMIT {page_size}
-                OFFSET {offset};
-
-                """
-    with db.engine.begin() as connection:
-        result = connection.execute(sqlalchemy.text(query))
+                    {} {}
+                LIMIT :page_size
+                OFFSET :offset;
+                """.format(sort_by_col, sort_by_order)
+            ),
+            {"route_name": route_name, "user_added": user_added, "page_size": page_size, "offset": offset}
+        )
 
     # Fetch all rows from the result
     data = result.fetchall()

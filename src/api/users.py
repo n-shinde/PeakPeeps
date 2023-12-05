@@ -75,7 +75,7 @@ def update_followers(user_to_update: str, follower_to_add: str):
             raise HTTPException(status_code=404, detail="User does not exist")
         if follower_to_add_id is None:
             raise HTTPException(status_code=404, detail="Follower does not exist")
-
+    
         # Make sure they dont already follow each other
         exists = connection.execute(
             sqlalchemy.text(
@@ -118,20 +118,20 @@ def update_followers(user_to_update: str, follower_to_add: str):
 
 
 @db.handle_errors
-@router.get("/get_following")
+@router.get("/get_following/{username}")
 def get_following(username: str):
     """
     This endpoint returns all of the friends of a certain user. The qualifications of a "friend" means that
     both users follow each other. There will be two rows in the follower table to represent this relationship.
     """
+
     with db.engine.begin() as connection:
         user_id = get_id_from_username(username, connection)
         
         if user_id is None:
             raise HTTPException(status_code=404, detail="User does not exist")
 
-
-        get_following = connection.execute(
+        result = connection.execute(
             sqlalchemy.text(
                 """
         	    SELECT username
@@ -141,9 +141,11 @@ def get_following(username: str):
           		"""
             ),
             {"user_id": user_id},
-        ).fetchall()
+        )
 
-    return list(get_following)
+        following_list = [row[0] for row in result.fetchall()]
+
+    return following_list
 
 
 @db.handle_errors

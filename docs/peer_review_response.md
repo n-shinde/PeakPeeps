@@ -28,6 +28,11 @@
 1. Updated schema.sql to match our updated tables in the database
 2. Made foreign key reference for user_id in followers, routes, and the ledgers
 3. Made naming conventions consistent (such as usernames, followers, etc.)
-4. Updated api spec to match our current endpoints
+4. Updated the API Spec to match our current endpoints
 5. Fixed redundancy in the reviews table with users
 6. Not splitting routes table, would just create unnecessary redundancy and harm readability
+7. We removed the /routes/report endpoint entirely because it didn’t add much value to user functionality, and creating logic to process reports and block users is a tedious process that doesn’t need to be added.
+8. For get_popular_routes, we now return routes that have at least 10 reviews and an average rating >= 4. In the API spec, we got rid of the popularity index and number of five star reviews to determine if a route was popular. Then we return top 10 popular routes in that endpoint and sort in decreasing order by average rating.
+9. Fixed update_followers - we made primary key be the user_id, so we just have user id and follower id. We also added usernames to the table for our own sanity so we know which id is associated with which name.
+10. Endpoints that return lists of JSONs (/routes/popular and /routes/followers) are not formatted correctly in APISpec; we fixed the APISpec to return a correctly formatted version.
+11. Updated the API Spec to just return “OK” if a transaction went through, and included a comment specifying that a string will be returned if the transaction didn’t go through.

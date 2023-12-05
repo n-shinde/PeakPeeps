@@ -33,8 +33,10 @@ def post_create_account(username: str):
 
 @db.handle_errors
 @router.get("/{username}")
+
 def get_user(username: str):
     with db.engine.begin() as connection:
+
         user_id = get_id_from_username(username, connection)
         if user_id is None:
             raise HTTPException(status_code=404, detail="User does not exists")
@@ -47,14 +49,20 @@ def get_user(username: str):
             WHERE username = :username
             """
         ),{"username": username}
-        ).fetchall()
+        )
 
-        user_info = {
-            "id": result[0],
-            "username": result[1],
-            "num_followers": result[2]   
-        }
-        return user_info
+        # Fetch the result
+        user_info = result.fetchone()
+
+        # Check if user_info is not None before trying to access its elements
+        if user_info is not None:
+            # Create a dictionary with the user information
+            user_dict = {
+                "id": user_info[0],
+                "username": user_info[1],
+                "num_followers": user_info[2],
+            }
+            return user_dict
 
 
 @db.handle_errors
@@ -75,7 +83,7 @@ def update_followers(user_to_update: str, follower_to_add: str):
             raise HTTPException(status_code=404, detail="User does not exist")
         if follower_to_add_id is None:
             raise HTTPException(status_code=404, detail="Follower does not exist")
-
+    
         # Make sure they dont already follow each other
         exists = connection.execute(
             sqlalchemy.text(
@@ -118,20 +126,25 @@ def update_followers(user_to_update: str, follower_to_add: str):
 
 
 @db.handle_errors
-@router.get("/get_following")
+@router.get("/get_following/{username}")
 def get_following(username: str):
     """
-    This endpoint returns all of the friends of a certain user. The qualifications of a "friend" means that
-    both users follow each other. There will be two rows in the follower table to represent this relationship.
+    Get the list of users whom the specified user is following.
+
+    Parameters:
+    - `username` (str): The username of the user to retrieve following list for.
+
+    Returns:
+    - List[str]: A list of usernames representing the users being followed by the specified user.
     """
+
     with db.engine.begin() as connection:
         user_id = get_id_from_username(username, connection)
         
         if user_id is None:
             raise HTTPException(status_code=404, detail="User does not exist")
 
-
-        get_following = connection.execute(
+        result = connection.execute(
             sqlalchemy.text(
                 """
         	    SELECT username
@@ -141,9 +154,11 @@ def get_following(username: str):
           		"""
             ),
             {"user_id": user_id},
-        ).fetchall()
+        )
 
-    return list(get_following)
+        following_list = [row[0] for row in result.fetchall()]
+
+    return following_list
 
 
 @db.handle_errors

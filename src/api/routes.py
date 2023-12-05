@@ -213,7 +213,7 @@ def post_add_route(route_to_add: Route):
         )
 
         if result.fetchone():
-            return "User has already submitted a review this route"
+            return "Route has already been added"
 
         new_id = connection.execute(
             sqlalchemy.text(

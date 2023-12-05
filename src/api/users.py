@@ -5,7 +5,7 @@ from pydantic import BaseModel
 from src.api import auth
 from src import database as db
 from src.database import get_id_from_username
-from src.api.peepcoins import add_peepcoins_query
+#from src.api.peepcoins import add_peepcoins_query
 
 router = APIRouter(
     prefix="/users",

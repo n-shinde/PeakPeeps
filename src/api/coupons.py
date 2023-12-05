@@ -120,7 +120,7 @@ def edit_coupon(request: EditCouponRequest):
 
         # updating the values of the coupon if they were passed in the request
         name = request.new_coupon_name or current_coupon.name
-        is_valid = request.is_valid or current_coupon.valid
+        is_valid = request.is_valid 
         price = request.price or current_coupon.price
 
         query = text(

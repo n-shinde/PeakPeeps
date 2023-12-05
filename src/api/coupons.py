@@ -78,7 +78,7 @@ class EditCouponRequest(BaseModel):
     business_name: str
     coupon_name: str
     new_coupon_name: Optional[str]
-    is_valid: Optional[str]
+    is_valid: bool
     price: Optional[int]
 
 
@@ -103,13 +103,13 @@ def edit_coupon(request: EditCouponRequest):
         query = """
             SELECT id, name, valid, price
             FROM coupons
-            WHERE name = :coupon_name AND id = :id
+            WHERE name = :coupon_name AND business_id = :business_id
         """
         current_coupon = connection.execute(
             text(query),
             {
                 "coupon_name": request.coupon_name,
-                "id": business_id,
+                "business_id": business_id,
             },
         ).first()
 
@@ -177,70 +177,55 @@ class CouponRequest(BaseModel):
     username: str
 
 
+
 @db.handle_errors
 @router.post("/purchase")
-def post_buy_coupon(request: CouponRequest):
-    # wrapping function like this so we can test the body of it seperately
-    coupon_name = request.coupon_name
-    username = request.username
+def post_buy_coupon(coupon_name: str, username: str):
 
-    with db.read_repeatable_engine.begin() as connection:
-        return buy_coupon(coupon_name, username, connection)
+    with db.engine.begin() as connection:
+        user_id = get_id_from_username(username, connection)
 
-
-@db.handle_errors
-def buy_coupon(coupon_name: str, username: str, connection):
-
-    # checking if the coupon is valid
-    query = text("SELECT valid FROM coupons WHERE name = :coupon_name")
-    is_valid = connection.execute(query, {"coupon_name": coupon_name}).scalar_one()
-
-    if not is_valid:
-        return "Coupon not valid. Cannot purchase."
+        if user_id is None:
+            raise HTTPException(status_code=404, detail="User does not exist")
     
-    user_id = get_id_from_username(username, connection)
+        # checking if the coupon is valid
+        coupon_id = get_id_from_coupons(coupon_name, connection)
 
-    if user_id is None:
-        raise HTTPException(status_code=404, detail="User does not exist")
+        if coupon_id is None:
+            raise HTTPException(status_code=404, detail="Coupon does not exist")
     
-    coupon_id = get_id_from_coupons(coupon_name, connection)
+        query = text("SELECT valid FROM coupons WHERE name = :coupon_name")
+        is_valid = connection.execute(query, {"coupon_name": coupon_name}).scalar_one()
 
-    if coupon_id is None:
-        raise HTTPException(status_code=404, detail="Coupon does not exist")
+        if not is_valid:
+            return "Coupon not valid. Cannot purchase."
+    
 
-    # checking if user can affording the transaction
-    query = text(
-        """
-        SELECT (SELECT SUM(change) FROM user_peepcoin_ledger WHERE user_id = :user_id) >= price
-        FROM coupons 
-        WHERE name = :coupon_name
-        """
-    )
-    can_afford = connection.execute(
-        query, {"user_id": user_id, "coupon_name": coupon_name}
-    ).scalar_one()
+        # checking if user can affording the transaction
+        query = text(
+            """
+            SELECT (SELECT SUM(change) FROM user_peepcoin_ledger WHERE user_id = :user_id) >= price
+            FROM coupons 
+            WHERE name = :coupon_name
+            """
+        )
+        can_afford = connection.execute(
+            query, {"user_id": user_id, "coupon_name": coupon_name}
+        ).scalar_one()
 
-    if not can_afford:
-        return "Not enough PeepCoins to purchase coupon. Please select another coupon to purchase."
+        if not can_afford:
+            return "Not enough PeepCoins to purchase coupon. Please select another coupon to purchase."
 
-    # removing peepcoins from their account
-    query = text(
-        "INSERT INTO user_peepcoin_ledger (user_id, change) VALUES (:user_id, -1 * (SELECT price FROM coupons where name = :coupon_name))"
-    )
-    connection.execute(query, {"user_id": user_id, "coupon_name": coupon_name})
+        # removing peepcoins from their account
+        query = text(
+            "INSERT INTO user_peepcoin_ledger (user_id, change) VALUES (:user_id, -1 * (SELECT price FROM coupons where name = :coupon_name))"
+        )
+        connection.execute(query, {"user_id": user_id, "coupon_name": coupon_name})
 
-    # adding coupon to their account
-    query = text(
-        "INSERT INTO user_coupon_ledger (user_id, coupon_id, change) VALUES (:user_id, :coupon_id, 1)"
-    )
-    connection.execute(query, {"user_id": user_id, "coupon_id": coupon_id})
+        # adding coupon to their account
+        query = text(
+            "INSERT INTO user_coupon_ledger (user_id, coupon_id, change) VALUES (:user_id, :coupon_id, 1)"
+        )
+        connection.execute(query, {"user_id": user_id, "coupon_id": coupon_id})
 
-    query = text (
-        """ 
-        INSERT INTO user_peepcoin_ledger (user_id, change) 
-        VALUES (:user_id, -1 * (SELECT price FROM coupons where id = :coupon_id))
-        """
-    )
-    connection.execute(query, {"user_id": user_id, "coupon_id": coupon_id})
-
-    return "OK"
+        return "OK"

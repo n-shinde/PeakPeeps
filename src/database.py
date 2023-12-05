@@ -59,6 +59,22 @@ def get_id_from_business(business_name, connection):
     
     except sqlalchemy.exc.NoResultFound:
         return None
+    
+def get_id_from_coupons(coupon_name, connection):
+    try:
+        return connection.execute(
+            sqlalchemy.text(
+                """
+                    SELECT id
+                    FROM coupons
+                    WHERE name = :name
+                    """
+            ),
+            {"name": coupon_name},
+        ).scalar_one()
+    
+    except sqlalchemy.exc.NoResultFound:
+        return None
 
 
 # Doing some magic with decorators. Check out this 60-second video look behind the curtain

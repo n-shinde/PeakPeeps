@@ -274,24 +274,40 @@ def get_popular_routes():
         popular_routes = connection.execute(
             sqlalchemy.text(
                 """
-		SELECT name, date_added, location, length_in_miles,difficulty, activities, coords, AVG(review.rating) AS Rating
-		FROM route
-		JOIN review ON 
-            route.id = review.route_id
-  		GROUP BY name
-		HAVING Rating >= 4 AND COUNT(review.rating) > 5
-  		ORDER BY Rating DESC
-  		LIMIT 10
-		"""
+                WITH ranked_routes AS (
+                SELECT
+                    routes.name,
+                    routes.city,
+                    routes.length_in_miles,
+                    AVG(review.rating) AS Rating,
+                    RANK() OVER (ORDER BY AVG(review.rating) DESC) AS ranking
+                FROM
+                    routes
+                JOIN
+                    review ON routes.id = review.route_id
+                GROUP BY
+                    routes.id
             )
-        ).scalars()
+            SELECT
+                name,
+                city,
+                length_in_miles,
+                Rating
+            FROM
+                ranked_routes
+            WHERE
+                ranking <= 10;
+                """
+            )
+        ).fetchall()
 
-        route_list = list(popular_routes)
+        print(popular_routes)
+         
+    route_list = [row[0] for row in popular_routes]
+    print(route_list)
 
-        # for item in popular_routes:
-        #     route_list.append(item)
 
-        return route_list
+    return route_list
 
 
 @db.handle_errors
@@ -304,6 +320,9 @@ def get_followers_routes(follower_username: str, username: str):
     This endpoint returns a follower's routes. 
     If the follower's username is incorrect or the person doesn't actually follow the user,
     an error message is returned.
+
+    username wants to look at follower_user routes
+
     """
     with db.engine.begin() as connection:
         follower_id = get_id_from_username(follower_username, connection)
@@ -315,7 +334,6 @@ def get_followers_routes(follower_username: str, username: str):
         if not user_id:
             raise HTTPException(status_code=404, detail="User does not exist")
         
-
         follower_check = connection.execute(
             sqlalchemy.text(
             """

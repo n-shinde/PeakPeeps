@@ -14,7 +14,7 @@ router = APIRouter(
 
 
 class PeepCoinRequest(BaseModel):
-    user_id: int
+    user_name: str
     change: int
 
 
@@ -42,8 +42,9 @@ def add_peepcoins(username, amount, connection):
 @db.handle_errors
 @router.put("/add")
 def put_add_peepcoins(request: PeepCoinRequest):
+
     with db.engine.begin() as connection:
-        add_peepcoins(request.user_id, request.change, connection)
+        add_peepcoins(request.user_name, request.change, connection)
     return "OK"
 
 @db.handle_errors

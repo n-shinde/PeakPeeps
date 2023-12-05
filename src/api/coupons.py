@@ -5,7 +5,8 @@ from pydantic import BaseModel
 from src.api import auth
 from src import database as db
 from src.database import get_id_from_business
-
+from src.database import get_id_from_username
+from src.database import get_id_from_coupons
 
 router = APIRouter(
     prefix="/coupons",
@@ -17,50 +18,64 @@ router = APIRouter(
 class Coupons(BaseModel):
     business_name: str
     name: str
-    cost: int
+    price: int
 
 
 @db.handle_errors
 @router.put("/add")
 def add_coupon(request: Coupons):
     with db.engine.begin() as connection:
+
+        #valid business check
         business_id = get_id_from_business(request.business_name, connection)
 
         if business_id is None:
              raise HTTPException(status_code=404, detail="Business does not exist")
 
+        # unique coupon check 
+        coupon_id = get_id_from_coupons(request.name, connection)
+
+        if coupon_id:
+            raise HTTPException(status_code=404, detail="Coupon with the same name already exists")
+
         connection.execute(
             text(
                 """
-                INSERT INTO coupons (business_id, name, cost)
-                VALUES (:bus_id, :name, :cost)
+                INSERT INTO coupons (business_id, name, price)
+                VALUES (:bus_id, :name, :price)
                 """
             ),
                 {
                     "bus_id": business_id,
                     "name": request.name,
-                    "cost": request.cost,
+                    "price": request.price,
                 }
         )
     return "OK"
 
 
 @db.handle_errors
-@router.post("/business/{business_id}")
-def get_valid_coupons_from_business(business_id: int):
+@router.post("/business/{business_name}")
+def get_valid_coupons_from_business(business_name: str):
     with db.engine.begin() as connection:
+        business_id = get_id_from_business(business_name, connection)
+
+        if business_id is None:
+             raise HTTPException(status_code=404, detail="Business does not exist")
+        
         query = text(
             "SELECT name, price from coupons WHERE business_id = :id AND valid"
         )
         result = connection.execute(query, {"id": business_id}).all()
+
         if not result:
-            return f"failed to look up coupons for business_id: {business_id}"
+            return f"failed to look up coupons for business: {business_name}"
 
         return [row._asdict() for row in result]
 
 
 class EditCouponRequest(BaseModel):
-    business_id: int
+    business_name: str
     coupon_name: str
     new_coupon_name: Optional[str]
     is_valid: Optional[str]
@@ -71,21 +86,35 @@ class EditCouponRequest(BaseModel):
 @router.post("/edit")
 def edit_coupon(request: EditCouponRequest):
     with db.engine.begin() as connection:
+
+        # valid business check
+        business_id = get_id_from_business(request.business_name, connection)
+
+        if business_id is None:
+             raise HTTPException(status_code=404, detail="Business does not exist")
+        
+        #valid coupon check
+        coupon_id = get_id_from_business(request.coupon_name, connection)
+
+        if coupon_id is None:
+             raise HTTPException(status_code=404, detail="Coupon does not exist")
+        
         # get the current coupon
         query = """
-            Select id, name, valid, price from coupons
-                WHERE name = :coupon_name
-                    AND id = :id
+            SELECT id, name, valid, price
+            FROM coupons
+            WHERE name = :coupon_name AND id = :id
         """
         current_coupon = connection.execute(
             text(query),
             {
                 "coupon_name": request.coupon_name,
-                "id": request.business_id,
+                "id": business_id,
             },
         ).first()
+
         if not current_coupon:
-            return f"Could not find a coupon from business id {request.business_id} for coupon {request.coupon_name}"
+            return f"Could not find a coupon from business {request.business_name} for coupon {request.coupon_name}"
 
         id = current_coupon.id
 
@@ -104,7 +133,7 @@ def edit_coupon(request: EditCouponRequest):
 
 
 class GetCouponRequest(BaseModel):
-    business_id: int
+    business_name: str
     coupon_name: str
 
 
@@ -112,65 +141,93 @@ class GetCouponRequest(BaseModel):
 @router.post("/get")
 def get_coupon(request: GetCouponRequest):
     with db.engine.begin() as connection:
+        business_id = get_id_from_business(request.business_name, connection)
+
+        if business_id is None:
+             raise HTTPException(status_code=404, detail="Business does not exist")
+        
+        #valid coupon check
+        coupon_id = get_id_from_business(request.coupon_name, connection)
+
+        if coupon_id is None:
+             raise HTTPException(status_code=404, detail="Coupon does not exist")
+        
         # get the current coupon
         query = """
-            Select id, name, valid, price from coupons
-                WHERE name = :coupon_name
-                    AND id = :id
+            SELECT id, name, valid, price 
+            FROM coupons
+            WHERE name = :coupon_name AND id = :id
         """
         coupon = connection.execute(
             text(query),
             {
                 "coupon_name": request.coupon_name,
-                "id": request.business_id,
+                "id": business_id,
             },
         ).first()
+
         if not coupon:
-            return f"Could not find a coupon from business_id {request.business_id} for coupon {request.coupon_name}"
+            return f"Could not find a coupon from business {request.business_name} for coupon {request.coupon_name}"
+        
         return coupon
 
 
 class CouponRequest(BaseModel):
-    coupon_id: int
-    user_id: int
+    coupon_name: str
+    username: str
 
 
 @db.handle_errors
 @router.post("/purchase")
 def post_buy_coupon(request: CouponRequest):
     # wrapping function like this so we can test the body of it seperately
-    coupon_id = request.coupon_id
-    user_id = request.user_id
+    coupon_name = request.coupon_name
+    username = request.username
+
     with db.read_repeatable_engine.begin() as connection:
-        return buy_coupon(coupon_id, user_id, connection)
+        return buy_coupon(coupon_name, username, connection)
 
 
 @db.handle_errors
-def buy_coupon(coupon_id: int, user_id: int, connection):
+def buy_coupon(coupon_name: str, username: str, connection):
+
     # checking if the coupon is valid
-    query = text("SELECT valid FROM coupons WHERE id = :coupon_id")
-    is_valid = connection.execute(query, {"coupon_id": coupon_id}).scalar_one()
+    query = text("SELECT valid FROM coupons WHERE name = :coupon_name")
+    is_valid = connection.execute(query, {"coupon_name": coupon_name}).scalar_one()
+
     if not is_valid:
-        return "coupon not valid"
+        return "Coupon not valid. Cannot purchase."
+    
+    user_id = get_id_from_username(username, connection)
+
+    if user_id is None:
+        raise HTTPException(status_code=404, detail="User does not exist")
+    
+    coupon_id = get_id_from_coupons(coupon_name, connection)
+
+    if coupon_id is None:
+        raise HTTPException(status_code=404, detail="Coupon does not exist")
 
     # checking if user can affording the transaction
     query = text(
         """
-            SELECT (SELECT SUM(change) FROM user_peepcoin_ledger WHERE user_id = :user_id) >= price
-                FROM coupons WHERE id = :coupon_id
-            """
+        SELECT (SELECT SUM(change) FROM user_peepcoin_ledger WHERE user_id = :user_id) >= price
+        FROM coupons 
+        WHERE name = :coupon_name
+        """
     )
     can_afford = connection.execute(
-        query, {"user_id": user_id, "coupon_id": coupon_id}
+        query, {"user_id": user_id, "coupon_name": coupon_name}
     ).scalar_one()
+
     if not can_afford:
-        return "user can't afford coupon"
+        return "Not enough PeepCoins to purchase coupon. Please select another coupon to purchase."
 
     # removing peepcoins from their account
     query = text(
-        "INSERT INTO user_peepcoin_ledger (user_id, change) VALUES (:user_id, -1 * (SELECT price FROM coupons where id = :coupon_id))"
+        "INSERT INTO user_peepcoin_ledger (user_id, change) VALUES (:user_id, -1 * (SELECT price FROM coupons where name = :coupon_name))"
     )
-    connection.execute(query, {"user_id": user_id, "coupon_id": coupon_id})
+    connection.execute(query, {"user_id": user_id, "coupon_name": coupon_name})
 
     # adding coupon to their account
     query = text(
@@ -183,4 +240,6 @@ def buy_coupon(coupon_id: int, user_id: int, connection):
             (INSERT INTO user_peepcoin_ledger (user_id, change) VALUES (:user_id, -1 * (SELECT price FROM coupons where id = :coupon_id)))
         """
     )
+    connection.execute(query, {"user_id": user_id, "coupon_id": coupon_id})
+
     return "OK"

@@ -14,7 +14,7 @@ router = APIRouter(
 
 
 class PeepCoinRequest(BaseModel):
-    user_id: int
+    user_name: str
     change: int
 
 
@@ -42,16 +42,29 @@ def add_peepcoins(username, amount, connection):
 @db.handle_errors
 @router.put("/add")
 def put_add_peepcoins(request: PeepCoinRequest):
+
     with db.engine.begin() as connection:
-        add_peepcoins(request.user_id, request.change, connection)
+        add_peepcoins(request.user_name, request.change, connection)
     return "OK"
 
 @db.handle_errors
 @router.get("/get")
 def get_peepcoins(username: str):
+    """
+    Retrieve the total PeepCoins balance for a user.
+
+    Parameters:
+    - username (str): The username of the user for whom to retrieve the PeepCoins balance.
+
+    Returns:
+    - int: The total PeepCoins balance for the specified user.
+    """
 
     with db.engine.begin() as connection:
         user_id = get_id_from_username(username, connection)
+
+        if not user_id:
+            raise HTTPException(status_code=404, detail="User does not exist")
 
         query = text(
         """
@@ -63,5 +76,14 @@ def get_peepcoins(username: str):
 
         result = connection.execute(query, {"user_id": user_id})
 
-        if not result:
-            return f"failed to look up peepcoins for user: {username}"
+        amount = result.fetchone()
+        print(amount)
+
+        if amount is not None and amount[0] is not None:
+            # Extract the integer value from the tuple
+            peepcoin_amount = amount[0]
+        else:
+            # Handle the case where there's no result or the result is None
+            peepcoin_amount = 0
+
+        return peepcoin_amount

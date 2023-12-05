@@ -19,6 +19,7 @@ router = APIRouter(
 def post_create_account(username: str):
     with db.engine.begin() as connection:
         user_id = get_id_from_username(username, connection)
+        
         if user_id is not None:
             raise HTTPException(status_code=404, detail="User already exists")
 
@@ -46,9 +47,9 @@ def get_user(username: str):
             WHERE username = :username
             """
         ),{"username": username}
-        ).scalars()
+        ).fetchone()
         
-        return result._asdict()
+        return dict(result)
 
 
 @db.handle_errors
@@ -65,9 +66,9 @@ def update_followers(user_to_update: str, follower_to_add: str):
         user_update_id = get_id_from_username(user_to_update, connection)
         follower_to_add_id = get_id_from_username(follower_to_add, connection)
 
-        if not user_update_id:
+        if user_update_id is None:
             raise HTTPException(status_code=404, detail="User does not exist")
-        if not follower_to_add_id:
+        if follower_to_add_id is None:
             raise HTTPException(status_code=404, detail="Follower does not exist")
 
         # Make sure they dont already follow each other
@@ -120,6 +121,7 @@ def get_following(username: str):
     """
     with db.engine.begin() as connection:
         user_id = get_id_from_username(username, connection)
+        
         if user_id is None:
             raise HTTPException(status_code=404, detail="User does not exist")
 
@@ -129,30 +131,12 @@ def get_following(username: str):
                 """
         	    SELECT username
         		FROM users
-                JOIN followers ON followers.follower_id = users.user_id
+                JOIN followers ON followers.follower_id = users.id
         		WHERE followers.user_id = :user_id
           		"""
             ),
             {"user_id": user_id},
-        ).scalars()
-
-        
-        # friends = []
-        # for item in get_following:
-        #     get_friend = connection.execute(
-        #         sqlalchemy.text(
-        #             """
-        #     	    SELECT username
-        #     		FROM users
-        #             JOIN followers ON users.user_id = followers.follower_id
-        #     		WHERE follower_id = :user_id AND user_id = :follower_id
-        #       		"""
-        #         ),
-        #         {"follower_id": item.follower_id, "user_id": user_id},
-        #     )
-
-        #     if get_friend.fetchone():
-        #         friends.append(get_friend.first())
+        ).fetchall()
 
     return list(get_following)
 
@@ -163,6 +147,7 @@ def remove_follower(user_to_update: str, follower_to_remove: str):
     with db.engine.begin() as connection:
         follower_to_remove_id = get_id_from_username(follower_to_remove, connection)
         user_to_update_id = get_id_from_username(user_to_update, connection)
+        
         if user_to_update_id is None:
             raise HTTPException(status_code=404, detail="User does not exist")
         if follower_to_remove_id is None:
@@ -178,7 +163,7 @@ def remove_follower(user_to_update: str, follower_to_remove: str):
                 WHERE user_id = :user_id AND follower_id = :follower_id
                 """
             ),
-            {"user_id": user_to_update_id, "follower_id": follower_to_add_id},
+            {"user_id": user_to_update_id, "follower_id": follower_to_remove_id},
         ).scalar()
 
         if not exists:

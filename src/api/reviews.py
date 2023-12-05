@@ -1,5 +1,5 @@
 import sqlalchemy
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from typing import Optional
 from sqlalchemy import text
 from pydantic import BaseModel
@@ -36,6 +36,12 @@ def post_add_review(review_to_add: Reviews):
     with db.engine.begin() as connection:
         user_id = get_id_from_username(review_to_add.username, connection)
         route_id = get_id_from_route_name(review_to_add.route_name, connection)
+
+        if not user_id:
+            raise HTTPException(status_code=404, detail="User does not exist")
+        
+        if not route_id:
+            raise HTTPException(status_code=404, detail="Route does not exist")
 
         completed_check = connection.execute(
             sqlalchemy.text(
@@ -84,7 +90,7 @@ def post_add_review(review_to_add: Reviews):
         )
 
         PEEP_COINS_FROM_POSTING_REVIEW = 5
-        add_peepcoins(user_id, PEEP_COINS_FROM_POSTING_REVIEW, connection)
+        add_peepcoins(review_to_add.username, PEEP_COINS_FROM_POSTING_REVIEW, connection)
 
     return f"Review ID: {review_id}"
 

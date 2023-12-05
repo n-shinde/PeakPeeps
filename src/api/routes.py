@@ -170,20 +170,6 @@ def search_routes(
     return {"previous": prev_page, "next": next_page, "results": lst}
 
 
-@db.handle_errors
-def get_id_from_route_name(route_name, connection):
-    return connection.execute(
-        sqlalchemy.text(
-            """
-                SELECT id
-                FROM routes
-                WHERE name = :name
-                """
-        ),
-        {"name": route_name},
-    ).scalar()
-
-
 class Route(BaseModel):
     username: str  # username of user that added route
     name: str
@@ -193,6 +179,23 @@ class Route(BaseModel):
     city: Optional[str]
     state: Optional[str]
 
+class CompleteRoute(BaseModel):
+    route_name: str
+    username: str
+
+@db.handle_errors
+def get_id_from_route_name(route_name, connection):
+    print(route_name)
+    return connection.execute(
+        sqlalchemy.text(
+            """
+            SELECT id
+            FROM routes
+            WHERE name ILIKE :name
+            """
+        ),
+        {"name": route_name},
+    ).scalar()
 
 @router.post("/add")
 def post_add_route(route_to_add: Route):
@@ -222,11 +225,11 @@ def post_add_route(route_to_add: Route):
         new_id = connection.execute(
             sqlalchemy.text(
                 """
-                    INSERT INTO routes (name, added_by_user_id, address, 
-                    city, state, length_in_miles, coordinates)
-                    VALUES (:name, :added_by_user_id, :address, :city,
-                    :state, :length, :coordinates)
-                    RETURNING id
+                INSERT INTO routes (name, added_by_user_id, address, 
+                city, state, length_in_miles, coordinates)
+                VALUES (:name, :added_by_user_id, :address, :city,
+                :state, :length, :coordinates)
+                RETURNING id
                 """
             ),
             {
@@ -258,7 +261,8 @@ def get_popular_routes():
                 """
 		SELECT name, date_added, location, length_in_miles,difficulty, activities, coords, AVG(review.rating) AS Rating
 		FROM route
-		JOIN review ON route.id = review.route_id
+		JOIN review ON 
+            route.id = review.route_id
   		GROUP BY name
 		HAVING Rating >= 4 AND COUNT(review.rating) > 5
   		ORDER BY Rating DESC
@@ -324,7 +328,7 @@ def get_followers_routes(follower_username: str, username: str):
 
 @db.handle_errors
 @router.post("/complete")
-def complete_route(route_name: str, username: str):
+def complete_route(request: CompleteRoute):
     """
     route_name: name of the route that was completed
     username: name of the user that completed the route
@@ -335,33 +339,42 @@ def complete_route(route_name: str, username: str):
     """
 
     with db.engine.begin() as connection:
-        user_id = get_id_from_username(username, connection)
-        route_id = get_id_from_route_name(route_name, connection)
+        user_id = get_id_from_username(request.username, connection)
+        route_id = get_id_from_route_name(request.route_name, connection)
 
-        connection.execute(
-            sqlalchemy.text(
-                """
-                    UPDATE routes
-                    SET num_completed = num_completed + 1
-                    WHERE routes.name = :name
-                    """
-            ),
-            {"name": route_name},
-        )
-
+        if not user_id:
+            raise HTTPException(status_code=404, detail="User does not exist")
+        
+        if not route_id:
+            raise HTTPException(status_code=404, detail="Route does not exist")
+        
+        # Check if the user already added this route
         completed_check = connection.execute(
             sqlalchemy.text(
                 """
-                SELECT user_id,route_id
-            FROM completed_route_ledger
-            WHERE user_id = :user_id AND route_id = :route_id
+                SELECT user_id, route_id
+                FROM completed_route_ledger
+                WHERE user_id = :user_id AND route_id = :route_id
             """
             ),
             {"user_id": user_id, "route_id": route_id},
         )
         if completed_check.fetchone():
-            return "User has already completed this route"
+            raise HTTPException(status_code=404, detail="User already completed this route, you shall not pass")
 
+        # Update the completed route
+        connection.execute(
+            sqlalchemy.text(
+                """
+                UPDATE routes
+                SET num_completed = num_completed + 1
+                WHERE routes.id = :route_id
+                    """
+            ),
+            {"route_id": route_id},
+        )
+
+        # Insert into the ledger
         connection.execute(
             sqlalchemy.text(
                 """
@@ -372,7 +385,8 @@ def complete_route(route_name: str, username: str):
             {"user_id": user_id, "route_id": route_id},
         )
 
+        # GIVE THEM SOME PEEP COINS
         PEEP_COINS_FROM_COMPLETING_ROUTE = 15
-        add_peepcoins(user_id, PEEP_COINS_FROM_COMPLETING_ROUTE, connection)
+        add_peepcoins(request.username, PEEP_COINS_FROM_COMPLETING_ROUTE, connection)
 
-        return {"OK"}
+        return "OK"

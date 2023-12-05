@@ -49,11 +49,11 @@ def get_user(username: str):
         ),{"username": username}
         ).fetchall()
 
-        user_info = (
-            "id"=result[0]
-            "username"=result[1]
-            "num_followers"=result[2]   
-        )
+        user_info = {
+            "id": result[0],
+            "username": result[1],
+            "num_followers": result[2]   
+        }
         return user_info
 
 

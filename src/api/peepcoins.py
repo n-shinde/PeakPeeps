@@ -49,6 +49,15 @@ def put_add_peepcoins(request: PeepCoinRequest):
 @db.handle_errors
 @router.get("/get")
 def get_peepcoins(username: str):
+    """
+    Retrieve the total PeepCoins balance for a user.
+
+    Parameters:
+    - username (str): The username of the user for whom to retrieve the PeepCoins balance.
+
+    Returns:
+    - int: The total PeepCoins balance for the specified user.
+    """
 
     with db.engine.begin() as connection:
         user_id = get_id_from_username(username, connection)

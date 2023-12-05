@@ -121,8 +121,13 @@ def update_followers(user_to_update: str, follower_to_add: str):
 @router.get("/get_following/{username}")
 def get_following(username: str):
     """
-    This endpoint returns all of the friends of a certain user. The qualifications of a "friend" means that
-    both users follow each other. There will be two rows in the follower table to represent this relationship.
+    Get the list of users whom the specified user is following.
+
+    Parameters:
+    - `username` (str): The username of the user to retrieve following list for.
+
+    Returns:
+    - List[str]: A list of usernames representing the users being followed by the specified user.
     """
 
     with db.engine.begin() as connection:

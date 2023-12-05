@@ -64,21 +64,21 @@ def test_data():
             "INSERT INTO coupons (id, name, valid, business_id, price) VALUES (3, 'An Invalid coupon', False, 2, 5)"
         )
         queries.append(
-            """INSERT INTO routes (id, name, address, city, state, length_in_miles, added_by_user_id, coordinates, reported)
-            VALUES (1, 'Bishop Peak', 'Patricia Drive', 'San Luis Obispo', 'CA', 3.7, 1, ARRAY[35.30327857570746, -120.69743771424115], FALSE)"""
+            """INSERT INTO routes (id, name, address, city, state, length_in_miles, added_by_user_id, coordinates)
+            VALUES (1, 'Bishop Peak', 'Patricia Drive', 'San Luis Obispo', 'CA', 3.7, 1, ARRAY[35.30327857570746, -120.69743771424115])"""
         )
         queries.append(
-            """INSERT INTO routes (id, name, address, city, state, length_in_miles, added_by_user_id, coordinates, reported)
-            VALUES (2, 'Resevoir Canyon Loop', 'Resevoir canyon natural reserve', 'San Luis Obispo', 'CA', 5.5, 2, ARRAY[35.30327857570746, -120.69743771424115], FALSE)"""
+            """INSERT INTO routes (id, name, address, city, state, length_in_miles, added_by_user_id, coordinates)
+            VALUES (2, 'Resevoir Canyon Loop', 'Resevoir canyon natural reserve', 'San Luis Obispo', 'CA', 5.5, 2, ARRAY[35.30327857570746, -120.69743771424115])"""
         )
         queries.append(
-            """INSERT INTO routes (id, name, address, city, state, length_in_miles, added_by_user_id, coordinates, reported)
-            VALUES (3, 'Lemon Grove and rock garden loop', 'Lemon GRove', 'San Luis Obispo', 'CA', 4.1, 3, ARRAY[35.30327857570746, -120.69743771424115], FALSE),
-            (4, 'Felsman Loop', 'Ferrini Ranch', 'San Luis Obispo', 'CA', 4.1, 3, ARRAY[35.30327857570746, -120.69743771424115], FALSE),
-            (5, 'Poly Canyon', 'Peterson Ranch', 'San Luis Obispo', 'CA', 4.6, 1, ARRAY[35.30327857570746, -120.69743771424115], FALSE),
-            (6, 'Froom Canyon', 'Irish Hills', 'San Luis Obispo', 'CA', 3.8, 3, ARRAY[35.30327857570746, -120.69743771424115], FALSE),
-            (7, 'M Trail', 'Cerro San Luis', 'San Luis Obispo', 'CA', 2.5, 3, ARRAY[35.30327857570746, -120.69743771424115], FALSE),
-            (8, 'Johnson Ranch Loop', 'Johnson Ranch', 'San Luis Obispo', 'CA', 4.1, 3, ARRAY[35.30327857570746, -120.69743771424115], FALSE)
+            """INSERT INTO routes (id, name, address, city, state, length_in_miles, added_by_user_id, coordinates)
+            VALUES (3, 'Lemon Grove and rock garden loop', 'Lemon GRove', 'San Luis Obispo', 'CA', 4.1, 3, ARRAY[35.30327857570746, -120.69743771424115]),
+            (4, 'Felsman Loop', 'Ferrini Ranch', 'San Luis Obispo', 'CA', 4.1, 3, ARRAY[35.30327857570746, -120.69743771424115]),
+            (5, 'Poly Canyon', 'Peterson Ranch', 'San Luis Obispo', 'CA', 4.6, 1, ARRAY[35.30327857570746, -120.69743771424115]),
+            (6, 'Froom Canyon', 'Irish Hills', 'San Luis Obispo', 'CA', 3.8, 3, ARRAY[35.30327857570746, -120.69743771424115]),
+            (7, 'M Trail', 'Cerro San Luis', 'San Luis Obispo', 'CA', 2.5, 3, ARRAY[35.30327857570746, -120.69743771424115]),
+            (8, 'Johnson Ranch Loop', 'Johnson Ranch', 'San Luis Obispo', 'CA', 4.1, 3, ARRAY[35.30327857570746, -120.69743771424115])
             """
         )
         for query in queries:

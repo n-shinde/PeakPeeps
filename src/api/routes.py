@@ -1,5 +1,5 @@
 import sqlalchemy
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from src.api import auth
 from src import database as db
@@ -185,8 +185,8 @@ def get_id_from_route_name(route_name, connection):
 
 
 class Route(BaseModel):
-    name: str
     username: str  # username of user that added route
+    name: str
     coordinates: list[float]
     address: Optional[str]
     length: float  # in miles
@@ -194,36 +194,39 @@ class Route(BaseModel):
     state: Optional[str]
 
 
-@db.handle_errors
 @router.post("/add")
 def post_add_route(route_to_add: Route):
+
     with db.engine.begin() as connection:
         user_id = get_id_from_username(route_to_add.username, connection)
+        if not user_id:
+            raise HTTPException(status_code=404, detail="User does not exist")
 
         result = connection.execute(
             sqlalchemy.text(
                 """
-                    SELECT 1
-                    FROM routes
-                    WHERE user_id = :user_id
-            AND routes.name ILIKE '%{route_name}%'
-                    """
+                SELECT 1
+                FROM routes
+                WHERE added_by_user_id = :user_id
+                AND routes.name ILIKE :route_name
+                """
             ),
-            {"route_name": route_to_add.name, "user_id": user_id},
+            {"route_name": route_to_add.name, "route_city": route_to_add.city, "user_id": user_id},
         )
 
+        
         if result.fetchone():
-            return "Route has already been added"
+            return "Route with the same name"
 
         new_id = connection.execute(
             sqlalchemy.text(
                 """
-        INSERT INTO routes (name, added_by_user_id, address, 
-        city, state, length_in_miles, coordinates)
-        VALUES (:name, :added_by_user_id, :address, :city,
-        :state, :length, :coordinates)
-                RETURNING id
-        """
+                    INSERT INTO routes (name, added_by_user_id, address, 
+                    city, state, length_in_miles, coordinates)
+                    VALUES (:name, :added_by_user_id, :address, :city,
+                    :state, :length, :coordinates)
+                    RETURNING id
+                """
             ),
             {
                 "name": route_to_add.name,
@@ -235,9 +238,9 @@ def post_add_route(route_to_add: Route):
                 "city": route_to_add.city,
             },
         ).scalar_one()
-
+        
         PEEP_COINS_FROM_ADDING_ROUTE = 10
-        add_peepcoins(user_id, PEEP_COINS_FROM_ADDING_ROUTE, connection)
+        add_peepcoins(route_to_add.username, PEEP_COINS_FROM_ADDING_ROUTE, connection)
         return new_id
 
 

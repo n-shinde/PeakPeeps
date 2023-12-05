@@ -42,7 +42,7 @@ def get_id_from_username(username, connection):
             {"name": username},
         ).scalar_one()
     except sqlalchemy.exc.NoResultFound:
-        raise FailedLookup(f"can't find user {username}")
+        return None
 
 
 # Doing some magic with decorators. Check out this 60-second video look behind the curtain

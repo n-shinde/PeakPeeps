@@ -30,13 +30,11 @@ def add_coupon(request: Coupons):
                 VALUES (:bus_id, :name, :cost)
                 """
             ),
-            [
                 {
                     "bus_id": request.business_id,
                     "name": request.name,
                     "cost": request.cost,
                 }
-            ],
         )
     return "OK"
 
@@ -173,4 +171,10 @@ def buy_coupon(coupon_id: int, user_id: int, connection):
         "INSERT INTO user_coupon_ledger (user_id, coupon_id, change) VALUES (:user_id, :coupon_id, 1)"
     )
     connection.execute(query, {"user_id": user_id, "coupon_id": coupon_id})
+
+    query = text (
+        """WITH insert AS 
+            (INSERT INTO user_peepcoin_ledger (user_id, change) VALUES (:user_id, -1 * (SELECT price FROM coupons where id = :coupon_id)))
+        """
+    )
     return "OK"

@@ -33,8 +33,10 @@ def post_create_account(username: str):
 
 @db.handle_errors
 @router.get("/{username}")
+
 def get_user(username: str):
     with db.engine.begin() as connection:
+
         user_id = get_id_from_username(username, connection)
         if user_id is None:
             raise HTTPException(status_code=404, detail="User does not exists")
@@ -47,14 +49,20 @@ def get_user(username: str):
             WHERE username = :username
             """
         ),{"username": username}
-        ).fetchall()
+        )
 
-        user_info = {
-            "id": result[0],
-            "username": result[1],
-            "num_followers": result[2]   
-        }
-        return user_info
+        # Fetch the result
+        user_info = result.fetchone()
+
+        # Check if user_info is not None before trying to access its elements
+        if user_info is not None:
+            # Create a dictionary with the user information
+            user_dict = {
+                "id": user_info[0],
+                "username": user_info[1],
+                "num_followers": user_info[2],
+            }
+            return user_dict
 
 
 @db.handle_errors

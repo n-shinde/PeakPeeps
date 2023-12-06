@@ -7,8 +7,8 @@ For every 2 users, there is one unique route.
 For every 2 users, there is one business.
 For every business, there are two coupons.
 
-On average, a user buys one coupon, adding one line to the coupon ledger. 
-For every route added, review made, route completed (say 5 per person), and coupon purchased, a line is added to the peepcoin ledger. On average, this results in 11.5 lines added to the ledger per person. 
+On average, a user buys one coupon, adding one line to the coupon ledger.
+For every route added, review made, route completed (say 5 per person), and coupon purchased, a line is added to the peepcoin ledger. On average, this results in 11.5 lines added to the ledger per person.
 
 33,000 users
 16,500 routes
@@ -18,7 +18,8 @@ For every route added, review made, route completed (say 5 per person), and coup
 33,000 coupons
 33,000 coupons purchased to coupon ledger
 165,000 lines to completed route ledger
-380,000 lines to peepcoin ledger 
+380,000 lines to peepcoin ledger
+
 - 20,000 for making routes, 200,000 for writing reviews, 40,000 for purchasing coupons, and 200,000 for completing routes
 
 **CSV Files were made using a Jupyter Notebook, seen in docs/dataPopulatingScript.md**
@@ -45,6 +46,8 @@ For every route added, review made, route completed (say 5 per person), and coup
 | /coupons/business/{business_name} | 27.44     |
 | /users/{username}                 | 26.45     |
 | /users/create_account             | 25.14     |
+
+Our 3 slowest endpoints were /routes/popular, /coupons/purchase, and /users/add_follower
 
 ## 3. Performance tuning
 
@@ -355,7 +358,7 @@ Planning Time: 0.627 ms
 Execution Time: 0.208 ms
 ```
 
-God golly, that was like a ~500X times performance increase. I don't fully understand it, but it looks like it's doing some cool fancy things with bitmaps to get a really cool performance. Can we do better though? Since we're always going to be looking up on both the user_id and follower_id at the same time, I wonder if it's better to use a compound index (an index on user_id, follower_id) instead.
+Good golly, that was like a ~500X times performance increase. I don't fully understand it, but it looks like it's doing some cool fancy things with bitmaps to get some great performance. Can we do better though? Since we're always going to be looking up on both the user_id and follower_id at the same time, I wonder if it's better to use a compound index (an index on user_id, follower_id) instead.
 
 Explain with compound index:
 
@@ -367,7 +370,7 @@ Planning Time: 0.500 ms
 Execution Time: 0.189 ms
 ```
 
-This is really cool! It actually was faster, but most of the main was in the planning time instead of hte execution time, probably since it had to orchestrate less fancy bitmap stuff
+This is really cool! It actually was faster. Interestingly, most of the gain was in the planning time instead of hte execution time, probably since it had to orchestrate less fancy bitmap stuff
 
 However, since we need to look up on just the user id in other cases (like getting the number of followers for a person), and having the 2 indexes was practically just as fast as having a compound index, we'll stick to having the 2 seperate indexes
 

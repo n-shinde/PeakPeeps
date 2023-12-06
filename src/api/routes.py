@@ -14,7 +14,7 @@ router = APIRouter(
     dependencies=[Depends(auth.get_api_key)],
 )
 
-
+ 
 class search_sort_options(str, Enum):
     route_name = "route_name"
     length_miles = "length_miles"
@@ -229,9 +229,8 @@ def post_add_route(route_to_add: Route):
                 """
                 SELECT 1
                 FROM routes
-                WHERE added_by_user_id != :user_id
-                AND routes.name ILIKE :route_name
-                AND routes.city ILIKE :route_city
+                WHERE routes.name ILIKE '%' || :route_name || '%'
+                AND routes.city ILIKE '%' || :route_city || '%'
                 """
             ),
             {"route_name": route_to_add.name, "route_city": route_to_add.city, "user_id": user_id},

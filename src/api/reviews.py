@@ -95,7 +95,7 @@ def post_add_review(review_to_add: Reviews):
                     "difficulty": review_to_add.difficulty,
                 }
             ],
-        )
+        ).scalars()
 
         PEEP_COINS_FROM_POSTING_REVIEW = 5
         add_peepcoins(review_to_add.username, PEEP_COINS_FROM_POSTING_REVIEW, connection)

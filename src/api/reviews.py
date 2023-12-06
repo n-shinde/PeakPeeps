@@ -34,6 +34,7 @@ def post_add_review(review_to_add: Reviews):
     If a review has already been submitted by the user, and error message is returned.
     """
     with db.engine.begin() as connection:
+        # Check that user and route id's are valid
         user_id = get_id_from_username(review_to_add.username, connection)
         route_id = get_id_from_route_name(review_to_add.route_name, connection)
 
@@ -42,6 +43,13 @@ def post_add_review(review_to_add: Reviews):
         
         if not route_id:
             raise HTTPException(status_code=404, detail="Route does not exist")
+        
+        # Check that rating and difficulty are valid 
+        if not (isinstance(review_to_add.rating, int) and 1 <= review_to_add.rating <= 5):
+            raise HTTPException(status_code=404, detail="Invalid input for rating. Rating must be an integer between 1-5.")
+        
+        if not (isinstance(review_to_add.difficulty, int) and 1 <= review_to_add.difficulty <= 5):
+            raise HTTPException(status_code=404, detail="Invalid input for difficulty. Difficulty must be an integer between 1-5.")
 
         completed_check = connection.execute(
             sqlalchemy.text(
@@ -110,17 +118,25 @@ def post_update_review(request: EditReviewRequest):
 
     Parameters:
     - request (EditReviewRequest): An object containing information about the review update,
-                                   including the username, route name, and new review details.
+    including the username, route name, and new review details.
 
     Returns:
     - str: A confirmation message ("OK") indicating that the review was successfully updated.
     """
 
     with db.engine.begin() as connection:
-        # get the current review
+        # Get the current review
         user_id = get_id_from_username(request.username, connection)
         route_id = get_id_from_route_name(request.route_name, connection)
 
+        # Check to make sure that review and difficulty are in range
+        if not(isinstance(request.new_rating, int) and 1 <= request.new_rating <= 5) and request.new_rating is not None:
+            raise HTTPException(status_code=404, detail="Invalid input for rating. Rating must be an integer between 1-5.")
+        
+        if not(isinstance(request.new_difficulty, int) and 1 <= request.new_difficulty <= 5) and request.new_difficulty is not None:
+            raise HTTPException(status_code=404, detail="Invalid input for difficulty. Difficulty must be an integer between 1-5.")
+
+         # Check that user id, route id are valid
         if not user_id:
             raise HTTPException(status_code=404, detail="User does not exist")
         

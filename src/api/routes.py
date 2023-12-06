@@ -220,6 +220,10 @@ def post_add_route(route_to_add: Route):
         if not user_id:
             raise HTTPException(status_code=404, detail="User does not exist")
 
+	route_id = get_id_from_route_name(route_to_add.name, connection)
+        if user_id:
+            raise HTTPException(status_code=404, detail="Route with this name already exists")
+
         result = connection.execute(
             sqlalchemy.text(
                 """
@@ -234,7 +238,7 @@ def post_add_route(route_to_add: Route):
         )
 
         if result.fetchone():
-            return "Route with a similar name and in the same city has already been added by another user"
+            raise HTTPException(status_code=404, detail="Route with a similar name and in the same city has already been added by another user")
 
 
         new_id = connection.execute(

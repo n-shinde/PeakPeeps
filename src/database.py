@@ -36,7 +36,7 @@ def get_id_from_username(username, connection):
                 """
                     SELECT id
                     FROM users
-                    WHERE username = :name
+                    WHERE username ILIKE :name
                     """
             ),
             {"name": username},
@@ -51,7 +51,7 @@ def get_id_from_business(business_name, connection):
                 """
                     SELECT id
                     FROM business
-                    WHERE name = :name
+                    WHERE name ILIKE :name
                     """
             ),
             {"name": business_name},
@@ -67,7 +67,7 @@ def get_id_from_coupons(coupon_name, connection):
                 """
                     SELECT id
                     FROM coupons
-                    WHERE name = :name
+                    WHERE name ILIKE :name
                     """
             ),
             {"name": coupon_name},

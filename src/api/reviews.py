@@ -65,19 +65,19 @@ def post_add_review(review_to_add: Reviews):
         if not completed_check.fetchone():
             return "User has not completed this route, cannot submit review."
 
-        result = connection.execute(
-            sqlalchemy.text(
-                """
-                SELECT 1
-                FROM review
-                WHERE user_id = :user_id AND route_id = :route_id
-                """
-            ),
-            {"user_id": user_id, "route_id": route_id},
-        )
+        # result = connection.execute(
+        #     sqlalchemy.text(
+        #         """
+        #         SELECT 1
+        #         FROM review
+        #         WHERE user_id = :user_id AND route_id = :route_id
+        #         """
+        #     ),
+        #     {"user_id": user_id, "route_id": route_id},
+        # )
 
-        if result.fetchone():
-            return "User has already submitted a review for this route."
+        # if result.fetchone():
+        #     return "User has already submitted a review for this route."
 
         review_id = connection.execute(
             sqlalchemy.text(
@@ -95,12 +95,12 @@ def post_add_review(review_to_add: Reviews):
                     "difficulty": review_to_add.difficulty,
                 }
             ],
-        ).scalars()
+        )
 
         PEEP_COINS_FROM_POSTING_REVIEW = 5
         add_peepcoins(review_to_add.username, PEEP_COINS_FROM_POSTING_REVIEW, connection)
 
-    return f"Review ID: {review_id}"
+    return "OK"
 
 class EditReviewRequest(BaseModel):
     username: str

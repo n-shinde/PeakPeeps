@@ -23,19 +23,10 @@ def add_business(request: Business):
 
     with db.engine.begin() as connection:
 
-        business = connection.execute(
-            text(
-                """
-                SELECT id
-                FROM business
-                WHERE name = :name
-                """
-            ),
-            {"name": request.name}
-        ).scalars()
+        business_id = get_id_from_business(request.name, connection)
 
-        if business:
-            raise HTTPException(status_code=404, detail="Business already exists")
+        if business_id:
+             raise HTTPException(status_code=404, detail="Business already exists")
         
         connection.execute(
             text(

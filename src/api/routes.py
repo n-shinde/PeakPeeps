@@ -7,7 +7,7 @@ from src.api.peepcoins import add_peepcoins
 from src.api.users import get_id_from_username
 from typing import Optional
 from enum import Enum
-
+ 
 router = APIRouter(
     prefix="/routes",
     tags=["routes"],

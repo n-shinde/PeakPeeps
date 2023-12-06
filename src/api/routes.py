@@ -220,8 +220,8 @@ def post_add_route(route_to_add: Route):
         if not user_id:
             raise HTTPException(status_code=404, detail="User does not exist")
 
-	route_id = get_id_from_route_name(route_to_add.name, connection)
-        if user_id:
+        route_id = get_id_from_route_name(route_to_add.name, connection)
+        if route_id:
             raise HTTPException(status_code=404, detail="Route with this name already exists")
 
         result = connection.execute(
